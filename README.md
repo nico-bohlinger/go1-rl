@@ -1,29 +1,38 @@
 # Isaac Gym Environments for Unitree-Go1 Robot #
+# Table of Contents
+1. [Overview](#Overview)
+2. [Useful Links](#Links)
+3. [Pre-requisite](#request)
+4. [Installation](#Installation)
+
+### Overview <a name="Overview"></a>
 This repository provides the environment used to train the Unitree Go1 robot to walk on rough terrain using NVIDIA's Isaac Gym. 
 
 It is based on the [legged gym environment](https://leggedrobotics.github.io/legged_gym/) by Nikita Rudin, Robotic Systems Lab, ETH Zurich (https://arxiv.org/abs/2109.11978) and the Isaac Gym simulator from NVIDIA (Paper: https://arxiv.org/abs/2108.10470). Training code builds on the [rsl_rl](https://github.com/leggedrobotics/rsl_rl) repository, also by Nikita Rudin, Robotic Systems Lab, ETH Zurich. All redistributed code retains its original [license](LICENSES/legged_gym/LICENSE).
 
 
-### Some Useful Links for Enviroment Setup ###
+### Some Useful Links for Enviroment Setup <a name="Links"></a>
 Original Project website: https://leggedrobotics.github.io/legged_gym/
 Paper: https://arxiv.org/abs/2109.11978 \
 A blog for setting up Isaac Gym: [Link](https://learningreinforcementlearning.com/setting-up-isaac-gym-on-an-ubuntu-laptop-785b5a15e5a9) \
 A YouTube Video Tutorial: [Video Link](https://www.youtube.com/watch?v=02euh9dC2tw&t=2s)
 
-### Pre-requisite ###
-Isaac Gym works on Ubuntu system and the system version should be Ubuntu 18.04, or 20.04. Isaac Gym also need NVIDIA GPU to enable the reinforcement learning training. Before implemented the trainig, please make sure you has an NVIDIA GPU with at least 8GB of VRAM. 
+### Pre-requisite <a name="request"></a>
+Isaac Gym works on Ubuntu system and the system version should be **Ubuntu 18.04**, or **20.04**. Isaac Gym also need NVIDIA GPU to enable the reinforcement learning training. Before implemented the trainig, please make sure you has an NVIDIA GPU with at least **8GB** of VRAM. 
 
-### Installation ###
+### Installation <a name="Installation"></a>
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
 2. Install pytorch 1.10 with cuda-11.3:
-    - `pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
+    ```bash
+    pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+    ```
 3. Install Isaac Gym
    1. Download and install Isaac Gym Preview 4 from [here](https://developer.nvidia.com/isaac-gym).
-   2. unzip the file via:
+   2. Unzip the file via:
         ```bash
         tar -xf IsaacGym_Preview_4_Package.tar.gz
         ```
-   3. now install the python package
+   3. Now install the python package
         ```bash
         cd isaacgym/python && pip install -e .
         ```
