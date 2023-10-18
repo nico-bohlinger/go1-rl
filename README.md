@@ -4,11 +4,16 @@
 2. [Useful Links](#Links)
 3. [Pre-requisite](#request)
 4. [Installation](#Installation)
+5. [Verification](#Verify)
+6. [Usage](#Usage)
+7. [Code Structure](#Structure)
+8. [Adding new Enviroment](#New_env)
+9. [Known Issues](#Issue)
 
 ### Overview <a name="Overview"></a>
 This repository provides the environment used to train the Unitree Go1 robot to walk on rough terrain using NVIDIA's Isaac Gym. 
 
-It is based on the [legged gym environment](https://leggedrobotics.github.io/legged_gym/) by Nikita Rudin, Robotic Systems Lab, ETH Zurich (https://arxiv.org/abs/2109.11978) and the Isaac Gym simulator from NVIDIA (Paper: https://arxiv.org/abs/2108.10470). Training code builds on the [rsl_rl](https://github.com/leggedrobotics/rsl_rl) repository, also by Nikita Rudin, Robotic Systems Lab, ETH Zurich. All redistributed code retains its original [license](LICENSES/legged_gym/LICENSE).
+This repository is based on the [legged gym environment](https://leggedrobotics.github.io/legged_gym/) by Nikita Rudin, Robotic Systems Lab, ETH Zurich (https://arxiv.org/abs/2109.11978) and the Isaac Gym simulator from NVIDIA (Paper: https://arxiv.org/abs/2108.10470). Training code builds on the [rsl_rl](https://github.com/leggedrobotics/rsl_rl) repository, also by Nikita Rudin, Robotic Systems Lab, ETH Zurich. All redistributed code retains its original [license](LICENSES/legged_gym/LICENSE).
 
 
 ### Some Useful Links for Enviroment Setup <a name="Links"></a>
@@ -50,7 +55,7 @@ Isaac Gym works on Ubuntu system and the system version should be **Ubuntu 18.04
     - Clone this repository
    - `cd legged_gym && pip install -e .`
 
-### Verify Installation of the Isaac Gym ###
+### Verify Installation of the Isaac Gym Training Enviroment <a name="Verify"></a>
 At this moment, though we don't have Unitree Go1 yet, we still can test if the training enviroment works. They have several quadruped robots supported by this repository, for example: A1, ANYmal C... Please note that for now, we don't have any trained policy yet, therefore, we can only use the ```test.py``` file to test if the enviroment was installed correctly.
 - Test the enviroment with ANYmal C robot standing on the ground:  
     ```bash
@@ -59,13 +64,8 @@ At this moment, though we don't have Unitree Go1 yet, we still can test if the t
  - By default it will generate 10 ANYmal C robot standing on a flat plane such like the picture below.
 ![Test pic](pic/test.png?raw=true)
 
-### CODE STRUCTURE ###
-1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
-2. Both env and config classes use inheritance.  
-3. Each non-zero reward scale specified in `cfg` will add a function with a corresponding name to the list of elements which will be summed to get the total reward.  
-4. Tasks must be registered using `task_registry.register(name, EnvClass, EnvConfig, TrainConfig)`. This is done in `envs/__init__.py`, but can also be done from outside of this repository.  
-
-### Usage ###
+### Usage <a name="Usage"></a>
+Now we can train our first policy to see how this training enviroment works and how we can tune the enviroment. Use ANYmal C robot as an example:
 1. Train:  
   ```python issacgym_anymal/scripts/train.py --task=anymal_c_flat```
     -  To run on CPU add following arguments: `--sim_device=cpu`, `--rl_device=cpu` (sim on CPU and rl on GPU is possible).
@@ -87,7 +87,14 @@ At this moment, though we don't have Unitree Go1 yet, we still can test if the t
     - By default the loaded policy is the last model of the last run of the experiment folder.
     - Other runs/model iteration can be selected by setting `load_run` and `checkpoint` in the train config.
 
-### Adding a new environment ###
+### CODE STRUCTURE <a name="Structure"></a>
+Then we can take a glance at the code structure, this part gives us help for adding new robots to our training enviroment.
+1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
+2. Both env and config classes use inheritance.  
+3. Each non-zero reward scale specified in `cfg` will add a function with a corresponding name to the list of elements which will be summed to get the total reward.  
+4. Tasks must be registered using `task_registry.register(name, EnvClass, EnvConfig, TrainConfig)`. This is done in `envs/__init__.py`, but can also be done from outside of this repository.  
+
+### Adding a new environment <a name="New_env"></a>
 The base environment `legged_robot` implements a rough terrain locomotion task. The corresponding cfg does not specify a robot asset (URDF/ MJCF) and no reward scales. 
 
 1. Add a new folder to `envs/` with `'<your_env>_config.py`, which inherit from an existing environment cfgs  
@@ -100,28 +107,27 @@ The base environment `legged_robot` implements a rough terrain locomotion task. 
 5. Modify/Tune other parameters in your `cfg`, `cfg_train` as needed. To remove a reward set its scale to zero. Do not modify parameters of other envs!
 
 
-### Troubleshooting ###
+### Troubleshooting <a name="Issue"></a>
 1. If you get the following error: `ImportError: libpython3.8m.so.1.0: cannot open shared object file: No such file or directory`, do: `sudo apt install libpython3.8`
 
-### Known Issues ###
-1. The contact forces reported by `net_contact_force_tensor` are unreliable when simulating on GPU with a triangle mesh terrain. A workaround is to use force sensors, but the force are propagated through the sensors of consecutive bodies resulting in an undesireable behaviour. However, for a legged robot it is possible to add sensors to the feet/end effector only and get the expected results. When using the force sensors make sure to exclude gravity from trhe reported forces with `sensor_options.enable_forward_dynamics_forces`. Example:
-```
-    sensor_pose = gymapi.Transform()
-    for name in feet_names:
-        sensor_options = gymapi.ForceSensorProperties()
-        sensor_options.enable_forward_dynamics_forces = False # for example gravity
-        sensor_options.enable_constraint_solver_forces = True # for example contacts
-        sensor_options.use_world_frame = True # report forces in world frame (easier to get vertical components)
-        index = self.gym.find_asset_rigid_body_index(robot_asset, name)
-        self.gym.create_asset_force_sensor(robot_asset, index, sensor_pose, sensor_options)
-    (...)
+2. The contact forces reported by `net_contact_force_tensor` are unreliable when simulating on GPU with a triangle mesh terrain. A workaround is to use force sensors, but the force are propagated through the sensors of consecutive bodies resulting in an undesireable behaviour. However, for a legged robot it is possible to add sensors to the feet/end effector only and get the expected results. When using the force sensors make sure to exclude gravity from trhe reported forces with `sensor_options.enable_forward_dynamics_forces`. Example:
+    ```
+        sensor_pose = gymapi.Transform()
+        for name in feet_names:
+            sensor_options = gymapi.ForceSensorProperties()
+            sensor_options.enable_forward_dynamics_forces = False # for example gravity
+            sensor_options.enable_constraint_solver_forces = True # for example contacts
+            sensor_options.use_world_frame = True # report forces in world frame (easier to get vertical components)
+            index = self.gym.find_asset_rigid_body_index(robot_asset, name)
+            self.gym.create_asset_force_sensor(robot_asset, index, sensor_pose, sensor_options)
+        (...)
 
-    sensor_tensor = self.gym.acquire_force_sensor_tensor(self.sim)
-    self.gym.refresh_force_sensor_tensor(self.sim)
-    force_sensor_readings = gymtorch.wrap_tensor(sensor_tensor)
-    self.sensor_forces = force_sensor_readings.view(self.num_envs, 4, 6)[..., :3]
-    (...)
+        sensor_tensor = self.gym.acquire_force_sensor_tensor(self.sim)
+        self.gym.refresh_force_sensor_tensor(self.sim)
+        force_sensor_readings = gymtorch.wrap_tensor(sensor_tensor)
+        self.sensor_forces = force_sensor_readings.view(self.num_envs, 4, 6)[..., :3]
+        (...)
 
-    self.gym.refresh_force_sensor_tensor(self.sim)
-    contact = self.sensor_forces[:, :, 2] > 1.
-```
+        self.gym.refresh_force_sensor_tensor(self.sim)
+        contact = self.sensor_forces[:, :, 2] > 1.
+    ```
