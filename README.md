@@ -1,29 +1,54 @@
-# Isaac Gym Environments for Legged Robots #
-This repository provides the environment used to train ANYmal (and other robots) to walk on rough terrain using NVIDIA's Isaac Gym.
-It includes all components needed for sim-to-real transfer: actuator network, friction & mass randomization, noisy observations and random pushes during training.  
-**Maintainer**: Nikita Rudin  
-**Affiliation**: Robotic Systems Lab, ETH Zurich  
-**Contact**: rudinn@ethz.ch  
+# Isaac Gym Environments for Unitree-Go1 Robot #
+This repository provides the environment used to train the Unitree Go1 robot to walk on rough terrain using NVIDIA's Isaac Gym. 
 
-### Useful Links ###
-Project website: https://leggedrobotics.github.io/legged_gym/
-Paper: https://arxiv.org/abs/2109.11978
+It is based on the [legged gym environment](https://leggedrobotics.github.io/legged_gym/) by Nikita Rudin, Robotic Systems Lab, ETH Zurich (https://arxiv.org/abs/2109.11978) and the Isaac Gym simulator from NVIDIA (Paper: https://arxiv.org/abs/2108.10470). Training code builds on the [rsl_rl](https://github.com/leggedrobotics/rsl_rl) repository, also by Nikita Rudin, Robotic Systems Lab, ETH Zurich. All redistributed code retains its original [license](LICENSES/legged_gym/LICENSE).
+
+
+### Some Useful Links for Enviroment Setup ###
+Original Project website: https://leggedrobotics.github.io/legged_gym/
+Paper: https://arxiv.org/abs/2109.11978 \
+A blog for setting up Isaac Gym: [Link](https://learningreinforcementlearning.com/setting-up-isaac-gym-on-an-ubuntu-laptop-785b5a15e5a9) \
+A YouTube Video Tutorial: [Video Link](https://www.youtube.com/watch?v=02euh9dC2tw&t=2s)
+
+### Pre-requisite ###
+Isaac Gym works on Ubuntu system and the system version should be Ubuntu 18.04, or 20.04. Isaac Gym also need NVIDIA GPU to enable the reinforcement learning training. Before implemented the trainig, please make sure you has an NVIDIA GPU with at least 8GB of VRAM. 
 
 ### Installation ###
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
 2. Install pytorch 1.10 with cuda-11.3:
     - `pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
 3. Install Isaac Gym
-   - Download and install Isaac Gym Preview 3 (Preview 2 will not work!) from https://developer.nvidia.com/isaac-gym
-   - `cd isaacgym/python && pip install -e .`
-   - Try running an example `cd examples && python 1080_balls_of_solitude.py`
-   - For troubleshooting check docs `isaacgym/docs/index.html`)
+   1. Download and install Isaac Gym Preview 4 from [here](https://developer.nvidia.com/isaac-gym).
+   2. unzip the file via:
+        ```bash
+        tar -xf IsaacGym_Preview_4_Package.tar.gz
+        ```
+   3. now install the python package
+        ```bash
+        cd isaacgym/python && pip install -e .
+        ```
+   4. Verify the installation by try running an example
+        ```bash
+        python examples/1080_balls_of_solitude.py
+        ```
+   5. For troubleshooting check docs `isaacgym/docs/index.html`
+
+
 4. Install rsl_rl (PPO implementation)
    - Clone https://github.com/leggedrobotics/rsl_rl
    -  `cd rsl_rl && pip install -e .` 
 5. Install legged_gym
     - Clone this repository
    - `cd legged_gym && pip install -e .`
+
+### Verify Installation of the Isaac Gym ###
+At this moment, though we don't have Unitree Go1 yet, we still can test if the training enviroment works. They have several quadruped robots supported by this repository, for example: A1, ANYmal C... Please note that for now, we don't have any trained policy yet, therefore, we can only use the ```test.py``` file to test if the enviroment was installed correctly.
+- Test the enviroment with ANYmal C robot standing on the ground:  
+    ```bash
+    python legged_gym/tests/test.py --task=anymal_c_flat
+    ```
+ - By default it will generate 10 ANYmal C robot standing on a flat plane such like the picture below.
+![Test pic](pic/test.png?raw=true)
 
 ### CODE STRUCTURE ###
 1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
