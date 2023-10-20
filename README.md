@@ -1,16 +1,24 @@
 # Isaac Gym Environments for Unitree-Go1 Robot #
 # Table of Contents
-1. [Overview](#Overview)
-2. [Useful Links](#Links)
-3. [Pre-requisite](#request)
-4. [Installation](#Installation)
-5. [Verification](#Verify)
-6. [Usage](#Usage)
-7. [Code Structure](#Structure)
-8. [Adding new Enviroment](#New_env)
-9. [Known Issues](#Issue)
+1. [Introduction](#Intro)
+   1. [Overview](#Overview)
+   2. [Useful Links](#Links)
+   3. [Pre-requisite](#request)
+2. [Installation](#Installation)
+   1. [Python Enviroment](#python)
+   2. [Isaac Gym](#isaac)
+   3. [Legged Gym](#leg)
+   4. [Verification](#Verify)
+3. [Usage](#Usage)
+   1. [Train a policy](#train)
+   2. [Test a policy](#test)
+4. [Code Structure](#Structure)
+   1. [Adding new Enviroment](#New_env)
+   2. [Example](#example)
+5.  [Known Issues](#Issue)
 
-### Overview <a name="Overview"></a>
+## Introduction <a name="Intro"></a>
+### Overview <a name="overview"></a>
 This repository provides the environment used to train the Unitree Go1 robot to walk on rough terrain using NVIDIA's Isaac Gym. 
 
 This repository is based on the [legged gym environment](https://leggedrobotics.github.io/legged_gym/) by Nikita Rudin, Robotic Systems Lab, ETH Zurich (https://arxiv.org/abs/2109.11978) and the Isaac Gym simulator from NVIDIA (Paper: https://arxiv.org/abs/2108.10470). Training code builds on the [rsl_rl](https://github.com/leggedrobotics/rsl_rl) repository, also by Nikita Rudin, Robotic Systems Lab, ETH Zurich. All redistributed code retains its original [license](LICENSES/legged_gym/LICENSE).
@@ -20,17 +28,20 @@ This repository is based on the [legged gym environment](https://leggedrobotics.
 Original Project website: https://leggedrobotics.github.io/legged_gym/
 Paper: https://arxiv.org/abs/2109.11978 \
 A blog for setting up Isaac Gym: [Link](https://learningreinforcementlearning.com/setting-up-isaac-gym-on-an-ubuntu-laptop-785b5a15e5a9) \
-A YouTube Video Tutorial: [Video Link](https://www.youtube.com/watch?v=02euh9dC2tw&t=2s)
+A YouTube Video Tutorial: [Video Link](https://www.youtube.com/watch?v=02euh9dC2tw&t=2s)\
+A GitHub Repo which collected some resources for Isaac Gym: [Link](https://github.com/wangcongrobot/awesome-isaac-gym)
 
-### Pre-requisite <a name="request"></a>
+## Pre-requisite <a name="request"></a>
 Isaac Gym works on Ubuntu system and the system version should be **Ubuntu 18.04**, or **20.04**. Isaac Gym also need NVIDIA GPU to enable the reinforcement learning training. Before implemented the trainig, please make sure you has an NVIDIA GPU with at least **8GB** of VRAM. 
 
-### Installation <a name="Installation"></a>
+## Installation <a name="Installation"></a>
+### Python Enviroment <a name="python"></a>
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
 2. Install pytorch 1.10 with cuda-11.3:
     ```bash
     pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
     ```
+### Isaac Gym <a name="isaac"></a>
 3. Install Isaac Gym
    1. Download and install Isaac Gym Preview 4 from [here](https://developer.nvidia.com/isaac-gym).
    2. Unzip the file via:
@@ -47,7 +58,7 @@ Isaac Gym works on Ubuntu system and the system version should be **Ubuntu 18.04
         ```
    5. For troubleshooting check docs `isaacgym/docs/index.html`
 
-
+### Legged Gym <a name="leg"></a>
 4. Install rsl_rl (PPO implementation)
    - Clone https://github.com/leggedrobotics/rsl_rl
    -  `cd rsl_rl && pip install -e .` 
@@ -64,9 +75,9 @@ At this moment, though we don't have Unitree Go1 yet, we still can test if the t
  - By default it will generate 10 ANYmal C robot standing on a flat plane such like the picture below.
 ![Test pic](pic/test.png?raw=true)
 
-### Usage <a name="Usage"></a>
+## Usage <a name="Usage"></a>
 Now we can train our first policy to see how this training enviroment works and how we can tune the enviroment. Use ANYmal C robot as an example:
-1. Train:  
+1. Train: <a name="train"></a>
   ```python issacgym_anymal/scripts/train.py --task=anymal_c_flat```
     -  To run on CPU add following arguments: `--sim_device=cpu`, `--rl_device=cpu` (sim on CPU and rl on GPU is possible).
     -  To run headless (no rendering) add `--headless`.
@@ -82,12 +93,12 @@ Now we can train our first policy to see how this training enviroment works and 
      - --num_envs NUM_ENVS:  Number of environments to create.
      - --seed SEED:  Random seed.
      - --max_iterations MAX_ITERATIONS:  Maximum number of training iterations.
-2. Play a trained policy:  
+2. Play a trained policy:  <a name="test"></a>
 ```python issacgym_anymal/scripts/play.py --task=anymal_c_flat```
     - By default the loaded policy is the last model of the last run of the experiment folder.
     - Other runs/model iteration can be selected by setting `load_run` and `checkpoint` in the train config.
 
-### CODE STRUCTURE <a name="Structure"></a>
+## CODE STRUCTURE <a name="Structure"></a>
 Then we can take a glance at the code structure, this part gives us help for adding new robots to our training enviroment.
 1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
 2. Both env and config classes use inheritance.  
@@ -106,8 +117,17 @@ The base environment `legged_robot` implements a rough terrain locomotion task. 
 4. Register your env in `isaacgym_anymal/envs/__init__.py`.
 5. Modify/Tune other parameters in your `cfg`, `cfg_train` as needed. To remove a reward set its scale to zero. Do not modify parameters of other envs!
 
+### Example <a name="example"></a>
+Follow the instruction to add the Unitree Go1 robot into the Isaac Gym.
+1. First we need to add the Go1 robot assets into the enviroment. Put the `go1` folder under the `/resources/robots` directory. The `go1` folder include the ropbot description such as `meshes` and the `urdf` file. These files are from Unitree Official [Github page](https://github.com/unitreerobotics/unitree_ros/tree/master/robots).
+2. Then we need to add a new folder which is `go1` into `envs/` with `go1_config.py` file, which inherit from an existing environment cfgs. We can refer to the existing `a1_config.py` file in the `a1` folder to create the `go1_config.py`. In this config file, we need:
+   - Set path to our go1 asset. And also define the body names, default_joint_positions and PD gains. 
+   - Specify the training configration which contains the `experiment_name` and `run_name`. 
+   - Add the training configration into the `__init__.py` file to take the registration.
+3. We can also modify other settings such as reward, terrain as needed.
 
-### Troubleshooting <a name="Issue"></a>
+
+## Troubleshooting <a name="Issue"></a>
 1. If you get the following error: `ImportError: libpython3.8m.so.1.0: cannot open shared object file: No such file or directory`, do: `sudo apt install libpython3.8`
 
 2. The contact forces reported by `net_contact_force_tensor` are unreliable when simulating on GPU with a triangle mesh terrain. A workaround is to use force sensors, but the force are propagated through the sensors of consecutive bodies resulting in an undesireable behaviour. However, for a legged robot it is possible to add sensors to the feet/end effector only and get the expected results. When using the force sensors make sure to exclude gravity from trhe reported forces with `sensor_options.enable_forward_dynamics_forces`. Example:
