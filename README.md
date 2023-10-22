@@ -144,7 +144,8 @@ You can use the following command to test the trained policy after training:
 ```bash
 python legged_gym/scripts/play.py --task=go1 --num_envs=256
 ```
-
+Here is the example for running the trained policy:
+![play_go1](pic/play_go1.gif)
 ## Troubleshooting <a name="Issue"></a>
 1. If you get the following error: `ImportError: libpython3.8m.so.1.0: cannot open shared object file: No such file or directory`, do: `sudo apt install libpython3.8`
 
