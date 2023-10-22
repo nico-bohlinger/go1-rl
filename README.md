@@ -70,7 +70,7 @@ Isaac Gym works on Ubuntu system and the system version should be **Ubuntu 18.04
 At this moment, though we don't have Unitree Go1 yet, we still can test if the training enviroment works. They have several quadruped robots supported by this repository, for example: A1, ANYmal C... Please note that for now, we don't have any trained policy yet, therefore, we can only use the ```test.py``` file to test if the enviroment was installed correctly.
 - Test the enviroment with ANYmal C robot standing on the ground:  
     ```bash
-    python legged_gym/tests/test.py --task=anymal_c_flat
+    python legged_gym/tests/test_env.py --task=anymal_c_flat
     ```
  - By default it will generate 10 ANYmal C robot standing on a flat plane such like the picture below.
 ![Test pic](pic/test.png?raw=true)
@@ -78,7 +78,7 @@ At this moment, though we don't have Unitree Go1 yet, we still can test if the t
 ## Usage <a name="Usage"></a>
 Now we can train our first policy to see how this training enviroment works and how we can tune the enviroment. Use ANYmal C robot as an example:
 1. Train: <a name="train"></a>
-  ```python issacgym_anymal/scripts/train.py --task=anymal_c_flat```
+  ```python legged_gym/scripts/train.py --task=anymal_c_flat```
     -  To run on CPU add following arguments: `--sim_device=cpu`, `--rl_device=cpu` (sim on CPU and rl on GPU is possible).
     -  To run headless (no rendering) add `--headless`.
     - **Important**: To improve performance, once the training starts press `v` to stop the rendering. You can then enable it later to check the progress.
@@ -94,7 +94,7 @@ Now we can train our first policy to see how this training enviroment works and 
      - --seed SEED:  Random seed.
      - --max_iterations MAX_ITERATIONS:  Maximum number of training iterations.
 2. Play a trained policy:  <a name="test"></a>
-```python issacgym_anymal/scripts/play.py --task=anymal_c_flat```
+```python legged_gym/scripts/play.py --task=anymal_c_flat```
     - By default the loaded policy is the last model of the last run of the experiment folder.
     - Other runs/model iteration can be selected by setting `load_run` and `checkpoint` in the train config.
 
@@ -126,6 +126,24 @@ Follow the instruction to add the Unitree Go1 robot into the Isaac Gym.
    - Add the training configration into the `__init__.py` file to take the registration.
 3. We can also modify other settings such as reward, terrain as needed.
 
+You can use the following command to test whether the new Go1 enviroment was added correctly.
+```bash
+python legged_gym/tests/test_env.py --task=go1
+```
+
+If it is correct, you will see a simulation such as follows:
+![Go1 test pic](pic/go1_test.png?raw=true)
+
+Besides the robot asset, we also implemented the training configrationm, therefore, we can train the Go1 robot. We can use this command to train the Go1 robot walking on a flat ground:
+```bash
+python legged_gym/scripts/train.py --task=go1 
+```
+In this repository, we already had one trained policy for Go1 walking on the flat ground which is in the `/logs` folder for thoes who don't want to spend time on training or lack of GPU memory.
+
+You can use the following command to test the trained policy after training:
+```bash
+python legged_gym/scripts/play.py --task=go1 --num_envs=256
+```
 
 ## Troubleshooting <a name="Issue"></a>
 1. If you get the following error: `ImportError: libpython3.8m.so.1.0: cannot open shared object file: No such file or directory`, do: `sudo apt install libpython3.8`
