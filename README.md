@@ -119,7 +119,7 @@ The base environment `legged_robot` implements a rough terrain locomotion task. 
 
 ### Example <a name="example"></a>
 Follow the instruction to add the Unitree Go1 robot into the Isaac Gym.
-1. First we need to add the Go1 robot assets into the enviroment. Put the `go1` folder under the `/resources/robots` directory. The `go1` folder include the ropbot description such as `meshes` and the `urdf` file. These files are from Unitree Official [Github page](https://github.com/unitreerobotics/unitree_ros/tree/master/robots).
+1. First we need to add the Go1 robot assets into the environment. Put the `go1` folder under the `/resources/robots` directory. The `go1` folder include the robot description such as `meshes` and the `urdf` file. These files are from Unitree Official [Github page](https://github.com/unitreerobotics/unitree_ros/tree/master/robots).
 2. Then we need to add a new folder which is `go1` into `envs/` with `go1_config.py` file, which inherit from an existing environment cfgs. We can refer to the existing `a1_config.py` file in the `a1` folder to create the `go1_config.py`. In this config file, we need:
    - Set path to our go1 asset. And also define the body names, default_joint_positions and PD gains. 
    - Specify the training configration which contains the `experiment_name` and `run_name`. 
