@@ -32,7 +32,7 @@ A YouTube Video Tutorial: [Video Link](https://www.youtube.com/watch?v=02euh9dC2
 A GitHub Repo which collected some resources for Isaac Gym: [Link](https://github.com/wangcongrobot/awesome-isaac-gym)
 
 ## Pre-requisite <a name="request"></a>
-Isaac Gym works on Ubuntu system and the system version should be **Ubuntu 18.04**, or **20.04**. Isaac Gym also need NVIDIA GPU to enable the reinforcement learning training. Before implemented the trainig, please make sure you has an NVIDIA GPU with at least **8GB** of VRAM. 
+Isaac Gym works on the Ubuntu system and the system version should be **Ubuntu 18.04**, or **20.04**. Isaac Gym also needs an NVIDIA GPU to enable reinforcement learning training. Before implementing the training, please make sure you have an NVIDIA GPU with at least **8GB** of VRAM. 
 
 ## Installation <a name="Installation"></a>
 ### Python Enviroment <a name="python"></a>
