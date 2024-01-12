@@ -50,8 +50,9 @@ def play(args):
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False
 
-    #actuator net
-    env_cfg.control.control_type = "actuator_net"
+    # env_cfg.terrain.mesh_type = "trimesh"
+    #Cfg.terrain.curriculum = True
+
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
@@ -77,8 +78,21 @@ def play(args):
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     img_idx = 0
 
+    # gamepad = gamepad_reader.Gamepad(vel_scale_x=2.5, vel_scale_y=1.5, vel_scale_rot=3.0)
+    
     x_vel_cmd, y_vel_cmd, yaw_vel_cmd = 1.5, 0.0, 0.0
     body_height_cmd = 0.0
+    step_frequency_cmd = 3.0
+    gaits = {"pronking": [0, 0, 0],
+             "trotting": [0.5, 0, 0],
+             "bounding": [0, 0.5, 0],
+             "pacing": [0, 0, 0.5]}
+
+    gait = torch.tensor(gaits["trotting"])
+    footswing_height_cmd = 0.08
+    pitch_cmd = 0.0
+    roll_cmd = 0.0
+    stance_width_cmd = 0.25
 
     for i in range(10*int(env.max_episode_length)):
         actions = policy(obs.detach())
@@ -86,6 +100,14 @@ def play(args):
         env.commands[:, 1] = y_vel_cmd
         env.commands[:, 2] = yaw_vel_cmd
         env.commands[:, 3] = body_height_cmd
+        # env.commands[:, 4] = step_frequency_cmd
+        # env.commands[:, 5:8] = gait
+        # env.commands[:, 8] = 0.5
+        # env.commands[:, 9] = footswing_height_cmd
+        # env.commands[:, 10] = pitch_cmd
+        # env.commands[:, 11] = roll_cmd
+        # env.commands[:, 12] = stance_width_cmd
+
         obs, _, rews, dones, infos = env.step(actions.detach())
         if RECORD_FRAMES:
             if i % 2:

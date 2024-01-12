@@ -93,6 +93,7 @@ class LeggedRobotCfg(BaseConfig):
         damping = {'joint_a': 1.0, 'joint_b': 1.5}     # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
+        hip_scale_reduction = 1.0
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
 
@@ -237,6 +238,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         save_interval = 50 # check for potential saves every this many iterations
         experiment_name = 'test'
         run_name = ''
+        # logger = "tensorboard"
         # load and resume
         resume = False
         load_run = -1 # -1 = last run

@@ -44,4 +44,12 @@ def train(args):
 
 if __name__ == '__main__':
     args = get_args()
+    args.headless = True
     train(args)
+
+
+# Summary training
+# logs/flat_go1/Jan12_11-17-01_ : training with every parameters default
+# logs/flat_go1/Jan12_15-38-30_ : train with hip_reduction_scale added in legged_robot.py - no big changes 
+# Keep hip reduction scale from this point
+# logs/flat_go1_act_net/Jan12_16-23-54_: train with actuator network from walk-these-ways - works well

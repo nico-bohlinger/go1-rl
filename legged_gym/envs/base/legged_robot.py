@@ -362,16 +362,32 @@ class LeggedRobot(BaseTask):
             [torch.Tensor]: Torques sent to the simulation
         """
         #pd controller
-        actions_scaled = actions * self.cfg.control.action_scale
+        # actions_scaled = actions * self.cfg.control.action_scale
+        actions_scaled = actions[:, :12] * self.cfg.control.action_scale
+        actions_scaled[:, [0, 3, 6, 9]] *= self.cfg.control.hip_scale_reduction  # scale down hip flexion range
+
+        self.joint_pos_target = actions_scaled + self.default_dof_pos
+
         control_type = self.cfg.control.control_type
+
         if control_type=="P":
             torques = self.p_gains*(actions_scaled + self.default_dof_pos - self.dof_pos) - self.d_gains*self.dof_vel
         elif control_type=="V":
             torques = self.p_gains*(actions_scaled - self.dof_vel) - self.d_gains*(self.dof_vel - self.last_dof_vel)/self.sim_params.dt
         elif control_type=="T":
             torques = actions_scaled
+        elif control_type == "actuator_net":
+            self.joint_pos_err = self.dof_pos - self.joint_pos_target + self.motor_offsets
+            self.joint_vel = self.dof_vel
+            torques = self.actuator_network(self.joint_pos_err, self.joint_pos_err_last, self.joint_pos_err_last_last,
+                                            self.joint_vel, self.joint_vel_last, self.joint_vel_last_last)
+            self.joint_pos_err_last_last = torch.clone(self.joint_pos_err_last)
+            self.joint_pos_err_last = torch.clone(self.joint_pos_err)
+            self.joint_vel_last_last = torch.clone(self.joint_vel_last)
+            self.joint_vel_last = torch.clone(self.joint_vel)
         else:
             raise NameError(f"Unknown controller type: {control_type}")
+
         return torch.clip(torques, -self.torque_limits, self.torque_limits)
 
     def _reset_dofs(self, env_ids):
@@ -541,6 +557,67 @@ class LeggedRobot(BaseTask):
                     print(f"PD gain of joint {name} were not defined, setting them to zero")
         self.default_dof_pos = self.default_dof_pos.unsqueeze(0)
 
+        if self.cfg.control.control_type == "actuator_net":
+            actuator_path = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/../../resources/actuator_nets/unitree_go1.pt'
+            actuator_network = torch.jit.load(actuator_path).to(self.device)
+
+            def eval_actuator_network(joint_pos, joint_pos_last, joint_pos_last_last, joint_vel, joint_vel_last,
+                                      joint_vel_last_last):
+                xs = torch.cat((joint_pos.unsqueeze(-1),
+                                joint_pos_last.unsqueeze(-1),
+                                joint_pos_last_last.unsqueeze(-1),
+                                joint_vel.unsqueeze(-1),
+                                joint_vel_last.unsqueeze(-1),
+                                joint_vel_last_last.unsqueeze(-1)), dim=-1)
+                torques = actuator_network(xs.view(self.num_envs * 12, 6))
+                return torques.view(self.num_envs, 12)
+
+            self.actuator_network = eval_actuator_network
+
+            self.joint_pos_err_last_last = torch.zeros((self.num_envs, 12), device=self.device)
+            self.joint_pos_err_last = torch.zeros((self.num_envs, 12), device=self.device)
+            self.joint_vel_last_last = torch.zeros((self.num_envs, 12), device=self.device)
+            self.joint_vel_last = torch.zeros((self.num_envs, 12), device=self.device)
+
+    def _init_custom_buffers__(self):
+        # domain randomization properties
+        # self.friction_coeffs = self.default_friction * torch.ones(self.num_envs, 4, dtype=torch.float, device=self.device,
+        #                                                           requires_grad=False)
+        # self.restitutions = self.default_restitution * torch.ones(self.num_envs, 4, dtype=torch.float, device=self.device,
+        #                                                           requires_grad=False)
+        # self.payloads = torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
+        # self.com_displacements = torch.zeros(self.num_envs, 3, dtype=torch.float, device=self.device,
+        #                                      requires_grad=False)
+        # self.motor_strengths = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device,
+        #                                   requires_grad=False)
+        self.motor_offsets = torch.zeros(self.num_envs, self.num_dof, dtype=torch.float, device=self.device,
+                                         requires_grad=False)
+        # self.Kp_factors = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device,
+        #                              requires_grad=False)
+        # self.Kd_factors = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device,
+        #                              requires_grad=False)
+        # self.gravities = torch.zeros(self.num_envs, 3, dtype=torch.float, device=self.device,
+        #                              requires_grad=False)
+        # self.gravity_vec = to_torch(get_axis_params(-1., self.up_axis_idx), device=self.device).repeat(
+        #     (self.num_envs, 1))
+
+        # if custom initialization values were passed in, set them here
+        # dynamics_params = ["friction_coeffs", "restitutions", "payloads", "com_displacements", "motor_strengths",
+        #                    "Kp_factors", "Kd_factors"]
+        # if self.initial_dynamics_dict is not None:
+        #     for k, v in self.initial_dynamics_dict.items():
+        #         if k in dynamics_params:
+        #             setattr(self, k, v.to(self.device))
+
+        # self.gait_indices = torch.zeros(self.num_envs, dtype=torch.float, device=self.device,
+        #                                 requires_grad=False)
+        # self.clock_inputs = torch.zeros(self.num_envs, 4, dtype=torch.float, device=self.device,
+        #                                 requires_grad=False)
+        # self.doubletime_clock_inputs = torch.zeros(self.num_envs, 4, dtype=torch.float, device=self.device,
+        #                                            requires_grad=False)
+        # self.halftime_clock_inputs = torch.zeros(self.num_envs, 4, dtype=torch.float, device=self.device,
+        #                                          requires_grad=False)
+
     def _prepare_reward_function(self):
         """ Prepares a list of reward functions, whcih will be called to compute the total reward.
             Looks for self._reward_<REWARD_NAME>, where <REWARD_NAME> are names of all non zero reward scales in the cfg.
@@ -668,6 +745,9 @@ class LeggedRobot(BaseTask):
         env_upper = gymapi.Vec3(0., 0., 0.)
         self.actor_handles = []
         self.envs = []
+
+        self._init_custom_buffers__()
+
         for i in range(self.num_envs):
             # create env instance
             env_handle = self.gym.create_env(self.sim, env_lower, env_upper, int(np.sqrt(self.num_envs)))
