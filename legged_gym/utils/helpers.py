@@ -184,10 +184,17 @@ def export_policy_as_jit(actor_critic, path):
         exporter.export(path)
     else: 
         os.makedirs(path, exist_ok=True)
-        path = os.path.join(path, 'policy_1.pt')
+        actor_path = os.path.join(path, 'ac_weights_last.pt')
         model = copy.deepcopy(actor_critic.actor).to('cpu')
         traced_script_module = torch.jit.script(model)
-        traced_script_module.save(path)
+        traced_script_module.save(actor_path)
+
+        #Actor = Actor body from wtw
+        body_path = path = os.path.join(path, 'body_latest.jit')
+        body_model = copy.deepcopy(actor_critic.actor).to('cpu')
+        traced_script_body_module = torch.jit.script(body_model)
+        traced_script_body_module.save(body_path)
+
 
 
 class PolicyExporterLSTM(torch.nn.Module):
