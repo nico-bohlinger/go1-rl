@@ -32,6 +32,8 @@ import numpy as np
 import os
 from datetime import datetime
 
+#from ml_logger import logger
+
 import isaacgym
 from legged_gym.envs import *
 from legged_gym.utils import get_args, task_registry
@@ -40,6 +42,7 @@ import torch
 def train(args):
     env, env_cfg = task_registry.make_env(name=args.task, args=args)
     ppo_runner, train_cfg = task_registry.make_alg_runner(env=env, name=args.task, args=args)
+    # logger.log_params(Args = vars(train_cfg))
     ppo_runner.learn(num_learning_iterations=train_cfg.runner.max_iterations, init_at_random_ep_len=True)
 
 if __name__ == '__main__':
@@ -53,3 +56,6 @@ if __name__ == '__main__':
 # logs/flat_go1/Jan12_15-38-30_ : train with hip_reduction_scale added in legged_robot.py - no big changes 
 # Keep hip reduction scale from this point
 # logs/flat_go1_act_net/Jan12_16-23-54_: train with actuator network from walk-these-ways - works well
+# Only use actuator net now
+# logs/flat_go1_act_net/Jan15_10-47-31_: train with 48 observations as it represents the reality - simulations is good
+# logs/flat_go1_act_net/Jan16_18-51-39_: removed base lin vel and projected gravity - robot in a crouched position but it's still walking
