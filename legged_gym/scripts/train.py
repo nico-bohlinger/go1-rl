@@ -59,3 +59,17 @@ if __name__ == '__main__':
 # Only use actuator net now
 # logs/flat_go1_act_net/Jan15_10-47-31_: train with 48 observations as it represents the reality - simulations is good
 # logs/flat_go1_act_net/Jan16_18-51-39_: removed base lin vel and projected gravity - robot in a crouched position but it's still walking
+# logs/flat_go1/Jan17_09-57-43_ : train without actuator network (with P)and without hip_scale_reduction with num_obs = 48 to see if it has an impact on the real robot - very shitty
+# logs/flat_go1/Jan17_10-51-07_: use go1 urdf from Stoch and same config file : SHITTY
+
+# Back to start
+# logs/flat_go1/Jan17_11-02-13_ : train with everything default num_obs = 235 - WORKS PERFECTLY
+# logs/flat_go1/Jan17_11-28-32_ : train with num_obs = 48 ans measure_heights = False (accordingly) - it does WORK but the robot is in a crouched position
+# logs/flat_go1/Jan17_11-56-54_ : (NOISE DEFAULT) + DOMAIN RAND modify friction_range [0.05, 4.5], randomize_base_mass = True, added_mass_range = [-1., 3.], - NO CROUCHED POSITION ANYMORE
+# logs/flat_go1/Jan17_12-22-15_ : don't scale the observations - the robot is a bit more crouched but that's okay
+# logs/flat_go1/Jan17_13-24-09_ : modified rewards torques = -0.0001 # -0.0002 - works great
+                                                # dof_pos_limits = -10.0
+                                                # action_rate = -0.01
+                                                # orientation = -5.
+                                                # base_height = -30.
+# logs/flat_go1/Jan17_13-50-22_ : delete base_lin_vel in the observation space - DEPLOYED ON THE ROBOT - joint vel causing some troubles

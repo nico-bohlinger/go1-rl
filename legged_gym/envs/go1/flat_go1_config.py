@@ -31,6 +31,22 @@
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
 class GO1FlatCfg( LeggedRobotCfg ):
+    class env( LeggedRobotCfg.env):
+        num_envs = 4096
+        num_observations = 45 # 48
+        num_privileged_obs = None # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise 
+        num_actions = 12
+        env_spacing = 3.  # not used with heightfields/trimeshes 
+        send_timeouts = True # send time out information to the algorithm
+        episode_length_s = 20 # episode length in seconds
+
+    class viewer:
+        ref_env = 0
+        # pos = [10, 0, 6]  # [m]
+        # lookat = [11., 5, 3.]  # [m]
+        pos = [5.0, -4.5, 4]  # [m]
+        lookat = [5.0, 0.5, 1.]  # [m]
+
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.34] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
@@ -57,12 +73,33 @@ class GO1FlatCfg( LeggedRobotCfg ):
         damping = {'joint': 0.5}     # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
-        hip_scale_reduction = 0.5
+        hip_scale_reduction = 1#0.5
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'plane'
+        measure_heights = False
+
+    class normalization:
+        class obs_scales:
+            lin_vel = 1.0 # 2.0
+            ang_vel = 1.0 # 0.25
+            dof_pos = 1.0 # 1.0
+            dof_vel = 1.0 # 0.05
+            height_measurements = 5.0
+        clip_observations = 100.
+        clip_actions = 100.
+    
+    class domain_rand:
+        randomize_friction = True
+        friction_range = [0.05, 4.5]# [0.5, 1.25]
+        randomize_base_mass = True # False
+        added_mass_range = [-1., 1.]
+        push_robots = True
+        push_interval_s = 15
+        max_push_vel_xy = 1.
+
 
     class asset( LeggedRobotCfg.asset ):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf'
@@ -78,8 +115,12 @@ class GO1FlatCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.34
         class scales( LeggedRobotCfg.rewards.scales ):
-            torques = -0.0002
+            torques = -0.0001 # -0.0002
             dof_pos_limits = -10.0
+            action_rate = -0.01
+            orientation = -5.
+            base_height = -30.
+            
 
 class GO1FlatCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):

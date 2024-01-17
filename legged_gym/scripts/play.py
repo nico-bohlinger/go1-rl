@@ -51,7 +51,7 @@ def play(args):
     env_cfg.domain_rand.push_robots = False
 
     #actuator net
-    env_cfg.control.control_type = "actuator_net"
+    env_cfg.control.control_type = "P" # actuator_net"
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
@@ -77,7 +77,7 @@ def play(args):
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     img_idx = 0
 
-    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = 1.5, 0.0, 0.0
+    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = 0.5, 0.0, 0.0
     body_height_cmd = 0.0
 
     for i in range(10*int(env.max_episode_length)):
