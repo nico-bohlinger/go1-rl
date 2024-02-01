@@ -63,7 +63,7 @@ class Logger:
         self.plot_process.start()
 
     def _plot(self):
-        nb_rows = 3
+        nb_rows = 4 #4
         nb_cols = 3
         fig, axs = plt.subplots(nb_rows, nb_cols)
         for key, value in self.state_log.items():
@@ -122,6 +122,21 @@ class Logger:
         a = axs[2, 2]
         if log["dof_torque"]!=[]: a.plot(time, log["dof_torque"], label='measured')
         a.set(xlabel='time [s]', ylabel='Joint Torque [Nm]', title='Torque')
+        a.legend()
+        #plot projected gravity x
+        a = axs[3, 0]
+        if log["projected_gravity_x"]: a.plot(time, log["projected_gravity_x"], label='measured')
+        a.set(xlabel='time [s]', ylabel='projected_gravity_x [m/s^2]', title='Projected Gravity X')
+        a.legend()
+        #plot projected gravity y
+        a = axs[3, 1]
+        if log["projected_gravity_y"]: a.plot(time, log["projected_gravity_y"], label='measured')
+        a.set(xlabel='time [s]', ylabel='projected_gravity_y [m/s^2]', title='Projected Gravity Y')
+        a.legend()
+        #plot projected gravity z
+        a = axs[3, 2]
+        if log["projected_gravity_z"]: a.plot(time, log["projected_gravity_z"], label='measured')
+        a.set(xlabel='time [s]', ylabel='projected_gravity_z [m/s^2]', title='Projected Gravity Z')
         a.legend()
         plt.show()
 

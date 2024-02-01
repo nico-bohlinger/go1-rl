@@ -50,8 +50,10 @@ def play(args):
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False
 
-    #actuator net
-    env_cfg.control.control_type = "P" # actuator_net"
+    #Control type
+    # env_cfg.env.num_observations = 45
+    # env_cfg.terrain.measure_heights = False
+    env_cfg.control.control_type = "actuator_net" # actuator_net"
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
@@ -77,7 +79,7 @@ def play(args):
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     img_idx = 0
 
-    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = 0.5, 0.0, 0.0
+    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = 0.3, 0.0, 0.0
     body_height_cmd = 0.0
 
     for i in range(10*int(env.max_episode_length)):
@@ -97,6 +99,7 @@ def play(args):
             env.set_camera(camera_position, camera_position + camera_direction)
 
         if i < stop_state_log:
+            # print("proj grav : ", env.projected_gravity)
             logger.log_states(
                 {
                     'dof_pos_target': actions[robot_index, joint_index].item() * env.cfg.control.action_scale,
@@ -110,10 +113,16 @@ def play(args):
                     'base_vel_y': env.base_lin_vel[robot_index, 1].item(),
                     'base_vel_z': env.base_lin_vel[robot_index, 2].item(),
                     'base_vel_yaw': env.base_ang_vel[robot_index, 2].item(),
-                    'contact_forces_z': env.contact_forces[robot_index, env.feet_indices, 2].cpu().numpy()
+                    'contact_forces_z': env.contact_forces[robot_index, env.feet_indices, 2].cpu().numpy(),
+                    'projected_gravity_x': env.projected_gravity[robot_index, 0].item(),
+                    'projected_gravity_y': env.projected_gravity[robot_index, 1].item(),
+                    'projected_gravity_z': env.projected_gravity[robot_index, 2].item()
                 }
             )
         elif i==stop_state_log:
+            # print("proj grav : ", env.projected_gravity)
+            # print("base vel x : ", env.base_lin_vel[robot_index, 0])
+            # print("base vel x item : ", env.base_lin_vel[robot_index, 0].item()
             logger.plot_states()
         if  0 < i < stop_rew_log:
             if infos["episode"]:

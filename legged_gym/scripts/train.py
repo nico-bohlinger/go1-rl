@@ -73,3 +73,20 @@ if __name__ == '__main__':
                                                 # orientation = -5.
                                                 # base_height = -30.
 # logs/flat_go1/Jan17_13-50-22_ : delete base_lin_vel in the observation space - DEPLOYED ON THE ROBOT - joint vel causing some troubles
+# logs/flat_go1/Jan17_16-22-28_ : train in torque space  control_type = 'T' - CRASHED
+# logs/flat_go1/Jan17_16-41-12_ : train in torque space  control_type = 'T' - PURE SHIT
+
+# THE BEHAVIOR BETWEEN logs/flat_go1/Jan17_13-50-22_and reality is the SAME - need to retune the reward function !
+# logs/flat_go1/Jan17_17-38-19_ : let's retake the original reward function scales : torques = -0.0002 , dof_pos_limits = -10.0 - the robot still has some difficulties to perfectly stands and is penché vers l'avant
+# logs/flat_go1/Jan18_12-37-59_: add more noise to dof vel (dof_vel = 4), keep reward function from logs/flat_go1/Jan17_13-24-09_, increased number of iterations to 2000 - too much 
+# logs/flat_go1/Jan18_13-57-52_ : noise dof vel = 2.5 and add scales to the observations (default one) - lin_vel = 1.0 # 2.0
+        # ang_vel = 0.25 # 0.25
+        # dof_pos = 1.0 # 1.0
+        # dof_vel = 0.05 # 0.05 ------------------------> not converging anymore
+# logs/flat_go1/Jan18_14-32-55_ : remove obs scales and just keep dof_vel noise = 2.5 and add more mass range [-1., 3.] - DEPLOYED ON THE ROBOT - Works a bit better !!
+# logs/flat_go1/Jan31_10-58-33_ : dof_vel_noise = 2.5, reput obs scales for ang_vel and dof_vel and see if training converges - DOES NOT CONVERGE
+# logs/flat_go1/Jan31_11-24-39_ : try with dof vel noise scale = 1.5 and keep obs scale to see if it converges - DOES NOT CONVERGE
+# : just keep dof:vel obs scale = 0.05, all other to 1 : see if converges or not : otherwise reput obs scales everywhere to 1 - DID not converge so scales = 1 everywhere
+
+# Next steps are conducted to observe if the actuator network plays a role in sim-to-real transfer
+# : just add actuator network to see how it behaves - DEPLOYED ON THE ROBOT WAY BETTER THAN PREVIOUSLY - now focus on making the training pipeline better
