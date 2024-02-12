@@ -59,6 +59,7 @@ class BaseTask():
 
         self.num_envs = cfg.env.num_envs
         self.num_obs = cfg.env.num_observations
+        self.unit_obs = cfg.env.unit_obs
         self.num_privileged_obs = cfg.env.num_privileged_obs
         self.num_actions = cfg.env.num_actions
 
@@ -68,6 +69,8 @@ class BaseTask():
 
         # allocate buffers
         self.obs_buf = torch.zeros(self.num_envs, self.num_obs, device=self.device, dtype=torch.float)
+        self.sample_unit_obs = torch.zeros(self.num_envs, self.unit_obs, device=self.device, dtype=torch.float)
+        self.obs_storage = torch.zeros((self.num_envs,self.unit_obs*4),dtype=torch.float,device=self.device)
         self.rew_buf = torch.zeros(self.num_envs, device=self.device, dtype=torch.float)
         self.reset_buf = torch.ones(self.num_envs, device=self.device, dtype=torch.long)
         self.episode_length_buf = torch.zeros(self.num_envs, device=self.device, dtype=torch.long)
@@ -112,6 +115,7 @@ class BaseTask():
         """ Reset all robots"""
         self.reset_idx(torch.arange(self.num_envs, device=self.device))
         obs, privileged_obs, _, _, _ = self.step(torch.zeros(self.num_envs, self.num_actions, device=self.device, requires_grad=False))
+        self.obs_storage[:, :] = 0.
         return obs, privileged_obs
 
     def step(self, actions):

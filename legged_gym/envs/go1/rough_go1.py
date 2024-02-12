@@ -30,7 +30,7 @@
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-class GO1FlatActNetCfg( LeggedRobotCfg ):
+class GO1RoughCfg( LeggedRobotCfg ):
     class env( LeggedRobotCfg.env):
         num_envs = 4096
         unit_obs = 45
@@ -82,9 +82,29 @@ class GO1FlatActNetCfg( LeggedRobotCfg ):
 
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'trimesh'
+        horizontal_scale = 0.1 # [m]
+        vertical_scale = 0.005 # [m]
+        border_size = 15 #25 # [m]
+        curriculum = True
+        static_friction = 1.0
+        dynamic_friction = 1.0
+        restitution = 0.
+        # rough terrain only:
         measure_heights = True
-        # terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
-        
+        measured_points_x = [-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8] # 1mx1.6m rectangle (without center line)
+        measured_points_y = [-0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5]
+        selected = False # select a unique terrain type and pass all arguments
+        terrain_kwargs = None # Dict of arguments for selected terrain
+        max_init_terrain_level = 2 # starting curriculum state
+        terrain_length = 8.
+        terrain_width = 8.
+        num_rows= 10 # number of terrain rows (levels)
+        num_cols = 10 #20  # number of terrain cols (types)
+        # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+        terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
+        # terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
+        # trimesh only:
+        slope_treshold = 0.75 # slopes above this threshold will be corrected to vertical surfaces
 
     class normalization:
         contact_force_range = [0.0, 50.0]
@@ -133,7 +153,7 @@ class GO1FlatActNetCfg( LeggedRobotCfg ):
         gravity_impulse_duration = 0.99
         randomize_gravity = True
         gravity_range = [-1, 1]
-        push_robots = True
+        push_robots = False
         push_interval_s = 15
         max_push_vel_xy = 1.
         randomize_lag_timesteps = True
@@ -166,11 +186,12 @@ class GO1FlatActNetCfg( LeggedRobotCfg ):
             torques = -0.0002 # -0.0002
             dof_pos_limits = -10.0
             action_rate = -0.01
-            orientation = -5. #-5.
-            base_height = -30. #-30
+            orientation = -0.2 #-5.
+            base_height = -15.0 #-30
             feet_air_time =  1.0 #1.0
             feet_slip = -0.04
-            feet_clearance = -0.01
+            feet_clearance = -0.001
+            stumble = -10.0
             # feet_clearance_cmd_linear = -30
             joint_power=-2e-5
             power_distribution=-10e-5
@@ -187,11 +208,11 @@ class GO1FlatActNetCfg( LeggedRobotCfg ):
         # max_contact_force = 100. # forces above this value are penalized
             
 
-class GO1FlatActNetCfgPPO( LeggedRobotCfgPPO ):
+class GO1RoughCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 'flat_go1_act_net'
+        experiment_name = 'rough_go1'
 
   

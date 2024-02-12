@@ -89,4 +89,68 @@ if __name__ == '__main__':
 # : just keep dof:vel obs scale = 0.05, all other to 1 : see if converges or not : otherwise reput obs scales everywhere to 1 - DID not converge so scales = 1 everywhere
 
 # Next steps are conducted to observe if the actuator network plays a role in sim-to-real transfer
-# : just add actuator network to see how it behaves - DEPLOYED ON THE ROBOT WAY BETTER THAN PREVIOUSLY - now focus on making the training pipeline better
+# logs/flat_go1_act_net/Feb01_09-20-17_ : just add actuator network to see how it behaves - DEPLOYED ON THE ROBOT WAY BETTER THAN PREVIOUSLY - now focus on making the training pipeline better
+# logs/flat_go1_act_net/Feb01_14-19-36_ : add com displacement in domain randomization - DEPLOYED ON THE ROBOT - WORK BETTER
+# logs/flat_go1_act_net/Feb01_15-13-39_ : dof vel obs scales = 0.5 (maximum value before the robot vibrates in reality) - the robot still vibrates so for now let's forget about observation scales
+# logs/flat_go1_act_net/Feb01_15-57-07_ : increase feet air time in the reward function to 1.5 - DID NOT CONVERGE
+# logs/flat_go1_act_net/Feb02_09-29-39_ : retry with feet_air_time = 1.2 - did not see drastic improvement
+# logs/flat_go1_act_net/Feb02_10-37-30_ : train with heading= False and lin_vel ranges = [-0.6, 0.6] - DID NOT CONVERGE - remove commands change 
+# logs/flat_go1_act_net/Feb02_11-25-29_ : introduce reward feet slip with -0.04 - DEPLOYED ON THE ROBOT - wayyy better
+# logs/flat_go1_act_net/Feb02_11-58-56_ : feet_slip = -0.08 - i think it's better with -0.04
+# logs/flat_go1_act_net/Feb02_14-45-23_ : add action smoothness 1 and 2 penalties (joint_pos_target was not properly initialized - hope it's okay) - mean reward = 0 all time
+# logs/flat_go1_act_net/Feb02_14-53-03_ : remove action_smoothness 1 & 2 to see if it was due to joint_pos_target not properly initialized - OK it's good (i cancel)
+# logs/flat_go1_act_net/Feb02_14-59-07_ : add only action_smoothness 1 - DEPLOYED ON THE ROBOT - looks maybe better but difficult to judge 
+
+#Time to add CERN specific environmental impact on robot (magnetic field, radiation)
+# logs/flat_go1_act_net/Feb05_11-06-39_ : start with lag_timesteps - see it it converges 
+# logs/flat_go1_act_net/Feb05_11-47-36_ : readd action smoothness 2 because maybe it needed more time -  NOT WORKING
+# logs/flat_go1_act_net/Feb05_14-38-19_ : forgot to reset last_last_actions - is it why it never converged ? + continue with Kp and Kd offsets (motor offset) - does not look good (CANCELLED)
+# logs/flat_go1_act_net/Feb05_14-41-52_ : remove action smoothness 2 - only keep randomize dof props (motor offset, strengths, etc) - forgot something in init_custom_buffers
+# logs/flat_go1_act_net/Feb05_15-43-19_ : retry with motor offsets and strengths (Kp and Kd are only for the P control type) - shiiiiit (STOPPED)
+# logs/flat_go1_act_net/Feb05_16-06-27_ : back to when there was lag timesteps only and add com_pos_range = [-0.15, 0.15] - not convergiiing (STOPPED)
+# logs/flat_go1_act_net/Feb05_16-16-20_ : back to com_pos_range = [-0.1, 0.1] - works again - PC CRASHED
+
+# logs/flat_go1_act_net/Feb05_16-46-43_ : add randomize_gravity - DOES NOT CONVERGE maybe I have to wait 10k iterations instead of 3k : https://github.com/Improbable-AI/walk-these-ways/issues/8 or https://github.com/Improbable-AI/walk-these-ways/issues/22
+# logs/flat_go1_act_net/Feb05_17-08-02_ : tried with gravity_range = [-0.0, 0.0] - does not look great right in the beginning - good again
+# logs/flat_go1_act_net/Feb05_17-11-00_ : remove gravity_range - good again
+# logs/flat_go1_act_net/Feb05_17-15-32_ : try with small gravity_range gravity_range = [-0.1, 0.1] - definitely does not work
+# logs/flat_go1_act_net/Feb05_17-19-40_ : try without pushes to the robot - does not converge 
+
+# logs/flat_go1_act_net/Feb05_17-41-12_ : try with trimesh - not converging
+# logs/flat_go1_act_net/Feb05_17-45-59_ : try with feet_air_time =  0.01 and dof_acc = -2.5e-7 - 40k iterations - not good at the end
+# logs/flat_go1_act_net/Feb06_08-50-06_ : retry without feet_air_time - see if it converges after 40k iterations
+# logs/flat_go1_act_net/Feb06_17-47-07_ : retry gravity randomization by removing randomize_gravity in create_envs() and push_robots
+
+
+
+
+# Try adding observation history like Jai did 
+# logs/flat_go1_act_net/Feb07_14-51-09_ : try addind the observation history with parameters from logs/flat_go1_act_net/Feb06_17-47-07_ - FORGOT TO RESIZE NOISE VEC !!!!
+# logs/flat_go1_act_net/Feb07_16-40-21_ : try with push_robots = True and friction range = [0.05, 1.25]
+# logs/flat_go1_act_net/Feb07_17-21-42_ : retry with adding randomize_gravity in create_envs() - still works
+# logs/flat_go1_act_net/Feb08_09-09-37_ : remove action smoothness 1 and put action smoothness 2 - definetely does not work
+# logs/flat_go1_act_net/Feb08_09-33-56_ : try with base heigth = -20 - shiit back to -30
+
+
+# Following dream waq implementation with privileged information and same reward function
+# logs/flat_go1_act_net/Feb08_10-08-40_ : see if it converges first and test (it's on plane terrain now) - does not work 
+
+# logs/flat_go1_act_net/Feb08_11-08-26_ : add feet clearnace penalty -0.01 - we see that the rear foot lifts upper
+
+# logs/flat_go1_act_net/Feb08_12-03-23_ : Retry adding privileged information with obs buf + height + contact forces + base lin vel - looks way better
+# logs/flat_go1_act_net/Feb08_12-35-57_ : retry with orientation = -0.2 - not good 
+# logs/flat_go1_act_net/Feb08_14-25-22_ : retry with torques = -0.00001 - better before
+# logs/flat_go1_act_net/Feb08_14-53-19_ : add joint power and power distribution penalties -BETTER - DEPLOYED ON THE ROBOT
+# logs/flat_go1_act_net/Feb08_16-01-51_ : try with trimesh - does not seem to rise 
+# logs/flat_go1_act_net/Feb08_16-39-55_ : remove stairs up and down and increase discrete proportions
+
+# logs/flat_go1_act_net/Feb08_17-28-45_ : gravity_range = [-1, 1] - looks wayyyy better
+# logs/flat_go1_act_net/Feb09_09-40-02_ : try with motor offset and strength randomization - does not work
+
+# Rough Go1 
+# logs/rough_go1/Feb09_10-10-04_ : try with full terrain - does not seem to rise
+# logs/rough_go1/Feb09_14-57-02_ : try with 50k iterations - wooooooooow seems to climb obstacles | simulation crashed at 43050 - DEPLOYED ON THE ROBOT - CAN CLIMB STUFF
+# - Feet stumble did help a lot - might even increase it
+# - Robot base needs to be "stiffer" increase a bit orientation penalty
+# Action smoothness 1 to -0.001
+# Try with stairs up and down

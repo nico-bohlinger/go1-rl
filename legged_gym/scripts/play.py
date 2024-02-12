@@ -45,14 +45,25 @@ def play(args):
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 50)
     env_cfg.terrain.num_rows = 5
     env_cfg.terrain.num_cols = 5
-    env_cfg.terrain.curriculum = False
+    env_cfg.terrain.curriculum = True
+    env_cfg.terrain.mesh_type = 'trimesh'
+    env_cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
+    env_cfg.env.priv_observe_contact_forces = False
+    env_cfg.env.priv_observe_base_lin_vel = False
     env_cfg.noise.add_noise = False
     env_cfg.domain_rand.randomize_friction = False
+    env_cfg.domain_rand.randomize_base_mass = False
+    # env_cfg.domain_rand.randomize_motor_offset = False
+    # env_cfg.domain_rand.randomize_motor_strength = False
+    env_cfg.domain_rand.randomize_gravity= False
     env_cfg.domain_rand.push_robots = False
-
+    env_cfg.commands.heading_command = False
+    env_cfg.domain_rand.randomize_base_com = False
     #Control type
     # env_cfg.env.num_observations = 45
     # env_cfg.terrain.measure_heights = False
+    env_cfg.domain_rand.lag_timesteps = 6
+    env_cfg.domain_rand.randomize_lag_timesteps = True
     env_cfg.control.control_type = "actuator_net" # actuator_net"
 
     # prepare environment

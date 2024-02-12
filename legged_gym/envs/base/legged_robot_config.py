@@ -33,12 +33,16 @@ from .base_config import BaseConfig
 class LeggedRobotCfg(BaseConfig):
     class env:
         num_envs = 4096
+        unit_obs = 45
         num_observations = 235 #235
         num_privileged_obs = None # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise 
         num_actions = 12
         env_spacing = 3.  # not used with heightfields/trimeshes 
         send_timeouts = True # send time out information to the algorithm
         episode_length_s = 20 # episode length in seconds
+
+        priv_observe_contact_forces = False
+        priv_observe_base_lin_vel = False
 
     class terrain:
         mesh_type = 'trimesh' # "heightfield" # none, plane, heightfield or trimesh
@@ -61,7 +65,8 @@ class LeggedRobotCfg(BaseConfig):
         num_rows= 10 # number of terrain rows (levels)
         num_cols = 20 # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
-        terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
+        terrain_proportions = [0.1, 0.1, 0.0, 0.0, 0.8]
+        # terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = 0.75 # slopes above this threshold will be corrected to vertical surfaces
 
@@ -120,13 +125,30 @@ class LeggedRobotCfg(BaseConfig):
         thickness = 0.01
 
     class domain_rand:
+        # rand_interval_s = 10
         randomize_friction = True
         friction_range = [0.5, 1.25]
         randomize_base_mass = False
         added_mass_range = [-1., 1.]
+        randomize_base_com = False
+        com_pos_range = [-0.1, 0.1]
+        randomize_motor_strength = False
+        motor_strength_range = [0.9, 1.1]
+        randomize_motor_offset = True
+        motor_offset_range = [-0.02, 0.02]
+        # randomize_Kp_factor = False
+        # Kp_factor_range = [0.8, 1.3]
+        # randomize_Kd_factor = False
+        # Kd_factor_range = [0.5, 1.5]
+        gravity_rand_interval_s = 7
+        gravity_impulse_duration = 1.0
+        randomize_gravity = False
+        gravity_range = [-1.0, 1.0]
         push_robots = True
         push_interval_s = 15
         max_push_vel_xy = 1.
+        randomize_lag_timesteps = True
+        lag_timesteps = 6
 
     class rewards:
         class scales:
@@ -145,6 +167,11 @@ class LeggedRobotCfg(BaseConfig):
             feet_stumble = -0.0 
             action_rate = -0.01
             stand_still = -0.
+            feet_slip = -0.0
+            feet_clearance = -0.0
+            feet_clearance_cmd_linear = -0.0
+            action_smoothness_1 = 0.
+            action_smoothness_2 = 0.
 
         only_positive_rewards = True # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
@@ -155,6 +182,7 @@ class LeggedRobotCfg(BaseConfig):
         max_contact_force = 100. # forces above this value are penalized
 
     class normalization:
+        contact_force_range = [0.0, 50.0]
         class obs_scales:
             lin_vel = 2.0
             ang_vel = 0.25
@@ -232,7 +260,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         policy_class_name = 'ActorCritic'
         algorithm_class_name = 'PPO'
         num_steps_per_env = 24 # per iteration
-        max_iterations = 1500 # number of policy updates
+        max_iterations = 50000 # number of policy updates
 
         # logging
         save_interval = 50 # check for potential saves every this many iterations
