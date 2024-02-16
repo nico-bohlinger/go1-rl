@@ -101,7 +101,8 @@ class GO1RoughCfg( LeggedRobotCfg ):
         num_rows= 10 # number of terrain rows (levels)
         num_cols = 10 #20  # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
-        terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
+        # terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
+        terrain_proportions = [0.0, 0.0, 0.1, 0.1, 0.8]
         # terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = 0.75 # slopes above this threshold will be corrected to vertical surfaces
@@ -174,28 +175,20 @@ class GO1RoughCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.34
         class scales( LeggedRobotCfg.rewards.scales ):
-            
-            # orientation = -0.2
-            # #torques = -0.00001
-            # base_height = -1.0 
-
-           
-            # smoothness=-0.01
-  
-            # Same as https://github.com/Anchoret13/legged_gym/blob/master/legged_gym/envs/go1/go1_config.py
             torques = -0.0002 # -0.0002
             dof_pos_limits = -10.0
+            dof_pos = -0.05
             action_rate = -0.01
-            orientation = -0.2 #-5.
-            base_height = -15.0 #-30
-            feet_air_time =  1.0 #1.0
+            orientation = -0.8 #-1.0 #-0.2 #-5.
+            ang_vel_xy = -0.05 # -0.05
+            base_height = -10.0 # -15.0 #-30
+            feet_air_time =  1.0 #2.0 #1.0
             feet_slip = -0.04
-            feet_clearance = -0.001
-            stumble = -10.0
-            # feet_clearance_cmd_linear = -30
+            feet_clearance = -0.0001 # -0.001
+            stumble = -12.0 # -10.0
             joint_power=-2e-5
-            power_distribution=-10e-5
-            # action_smoothness_1 = -0.1
+            power_distribution=-10e-5 # -10e-5
+            # action_smoothness_1 = -0.001
             # action_smoothness_2 = -0.1
             # feet_air_time =  0.01
            

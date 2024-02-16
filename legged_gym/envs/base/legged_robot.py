@@ -1091,6 +1091,10 @@ class LeggedRobot(BaseTask):
     def _reward_torques(self):
         # Penalize torques
         return torch.sum(torch.square(self.torques), dim=1)
+    
+    def _reward_dof_pos(self):
+        # Penalize dof positions
+        return torch.sum(torch.square(self.dof_pos - self.default_dof_pos), dim=1)
 
     def _reward_dof_vel(self):
         # Penalize dof velocities
@@ -1190,7 +1194,7 @@ class LeggedRobot(BaseTask):
         foot_velocities_y = self.foot_velocities[:, :, 1].view(self.num_envs, -1)
         foot_velocities = torch.sqrt(torch.square(foot_velocities_x) + torch.square(foot_velocities_y))
         #print(f'foot_velocities{foot_velocities.shape}') #[4096,4]
-        desired_foot_height=0.10#0.07
+        desired_foot_height=0.07 #0.07
         #desired_foot_height = torch.full((4096, 4), 0.07,device=self.device, requires_grad=False)
         #print(f'desired_foot_height{desired_foot_height.shape}')
         rew_foot_clearance = torch.square(desired_foot_height- foot_height) * foot_velocities
