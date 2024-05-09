@@ -64,7 +64,7 @@ Isaac Gym works on the Ubuntu system and the system version should be **Ubuntu 1
    -  `cd rsl_rl && git checkout v1.0.2 && pip install -e .` 
 5. Install legged_gym
     - Clone this repository
-   - `cd legged_gym && pip install -e .`
+   - `cd go1_rl && pip install -e .`
 
 ### Verify Installation of the Isaac Gym Training Enviroment <a name="Verify"></a>
 At this moment, though we don't have Unitree Go1 yet, we still can test if the training enviroment works. They have several quadruped robots supported by this repository, for example: A1, ANYmal C... Please note that for now, we don't have any trained policy yet, therefore, we can only use the ```test.py``` file to test if the enviroment was installed correctly.
