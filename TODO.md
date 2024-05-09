@@ -1,0 +1,1 @@
+- [ ] one bash file that does the whole downloading and installing setup
