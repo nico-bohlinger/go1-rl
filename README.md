@@ -59,9 +59,9 @@ Isaac Gym works on the Ubuntu system and the system version should be **Ubuntu 1
    5. For troubleshooting check docs `isaacgym/docs/index.html`
 
 ### Legged Gym <a name="leg"></a>
-4. Install rsl_rl (PPO implementation)
+4. Install rsl_rl (PPO implementation) **!IMPORTANT!** version 1.0.2
    - Clone https://github.com/leggedrobotics/rsl_rl
-   -  `cd rsl_rl && pip install -e .` 
+   -  `cd rsl_rl && git checkout v1.0.2 && pip install -e .` 
 5. Install legged_gym
     - Clone this repository
    - `cd legged_gym && pip install -e .`
