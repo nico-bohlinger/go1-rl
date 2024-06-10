@@ -29,5 +29,5 @@
   - [x] diff URDF
   - [x] create hydra template
   - [x] merge configs
-  - [ ] merge base and env
-  - [ ] copy over rl stuff
+  - [x] merge base and env
+  - [x] copy over rl stuff

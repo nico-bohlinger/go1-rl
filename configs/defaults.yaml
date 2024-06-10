@@ -8,6 +8,15 @@ hydra:
   run:
     dir: .
 
+experiment:
+  seed: 1
+  name: ""
+
+wandb:
+  project: "legged-gym"
+  entity: "chris-pal"
+#  name: "${experiment.name}" # unused
+
 env:
   device: "cuda:0"
   headless: True
