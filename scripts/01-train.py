@@ -4,7 +4,7 @@ import hydra
 
 from legged_gym.env import Env
 from legged_gym.rl import OnPolicyRunner
-from legged_gym.utils.helpers import setSeed, createLogDir
+from legged_gym.utils.helpers import setSeed, createLogDir, get_load_path
 
 OmegaConf.register_new_resolver("eval", eval)
 
@@ -19,7 +19,6 @@ def train(cfg):
     setSeed(cfg.experiment.seed)
     logdir = createLogDir(cfg)
 
-    # TODO: allow resuming from a specific checkpoint
     # TODO: play script
     # TODO: export script
     # TODO: performance
@@ -30,9 +29,14 @@ def train(cfg):
 
     env = Env(cfg)
     ppo = OnPolicyRunner(env, cfg.ppo, log_dir=logdir, device=cfg.experiment.device, wandb=wandb)
-    ppo.learn(num_learning_iterations=cfg.ppo.runner.max_iterations, init_at_random_ep_len=True)
 
-    # model = Model(**wandb.config.model.configs)
+    # code for resuming
+    if cfg.ppo.runner.load_run != -1:
+        model_path = get_load_path(cfg.ppo.runner.load_run)
+        print("==== RESUMING TRAINING OF MODEL:", model_path)
+        ppo.load(model_path)
+
+    ppo.learn(num_learning_iterations=cfg.ppo.runner.max_iterations, init_at_random_ep_len=True)
 
 
 if __name__ == "__main__":

@@ -4,16 +4,17 @@ from collections import deque
 import statistics
 
 from torch import optim
-from torch.utils.tensorboard import SummaryWriter
 
 
 import torch
 import torch.nn as nn
 from torch.distributions import Normal
+from tqdm import trange
+
+from legged_gym.utils.helpers import get_activation
 
 
 class ActorCritic(nn.Module):
-    is_recurrent = False
 
     def __init__(
         self,
@@ -24,13 +25,7 @@ class ActorCritic(nn.Module):
         critic_hidden_dims=[256, 256, 256],
         activation="elu",
         init_noise_std=1.0,
-        **kwargs,
     ):
-        if kwargs:
-            print(
-                "ActorCritic.__init__ got unexpected arguments, which will be ignored: "
-                + str([key for key in kwargs.keys()])
-            )
         super(ActorCritic, self).__init__()
 
         activation = get_activation(activation)
@@ -119,70 +114,6 @@ class ActorCritic(nn.Module):
     def evaluate(self, critic_observations, **kwargs):
         value = self.critic(critic_observations)
         return value
-
-
-def get_activation(act_name):
-    if act_name == "elu":
-        return nn.ELU()
-    elif act_name == "selu":
-        return nn.SELU()
-    elif act_name == "relu":
-        return nn.ReLU()
-    elif act_name == "crelu":
-        return nn.ReLU()
-    elif act_name == "lrelu":
-        return nn.LeakyReLU()
-    elif act_name == "tanh":
-        return nn.Tanh()
-    elif act_name == "sigmoid":
-        return nn.Sigmoid()
-    else:
-        print("invalid activation function!")
-        return None
-
-
-def split_and_pad_trajectories(tensor, dones):
-    """Splits trajectories at done indices. Then concatenates them and padds with zeros up to the length og the longest trajectory.
-    Returns masks corresponding to valid parts of the trajectories
-    Example:
-        Input: [ [a1, a2, a3, a4 | a5, a6],
-                 [b1, b2 | b3, b4, b5 | b6]
-                ]
-
-        Output:[ [a1, a2, a3, a4], | [  [True, True, True, True],
-                 [a5, a6, 0, 0],   |    [True, True, False, False],
-                 [b1, b2, 0, 0],   |    [True, True, False, False],
-                 [b3, b4, b5, 0],  |    [True, True, True, False],
-                 [b6, 0, 0, 0]     |    [True, False, False, False],
-                ]                  | ]
-
-    Assumes that the inputy has the following dimension order: [time, number of envs, aditional dimensions]
-    """
-    dones = dones.clone()
-    dones[-1] = 1
-    # Permute the buffers to have order (num_envs, num_transitions_per_env, ...), for correct reshaping
-    flat_dones = dones.transpose(1, 0).reshape(-1, 1)
-
-    # Get length of trajectory by counting the number of successive not done elements
-    done_indices = torch.cat((flat_dones.new_tensor([-1], dtype=torch.int64), flat_dones.nonzero()[:, 0]))
-    trajectory_lengths = done_indices[1:] - done_indices[:-1]
-    trajectory_lengths_list = trajectory_lengths.tolist()
-    # Extract the individual trajectories
-    trajectories = torch.split(tensor.transpose(1, 0).flatten(0, 1), trajectory_lengths_list)
-    padded_trajectories = torch.nn.utils.rnn.pad_sequence(trajectories)
-
-    trajectory_masks = trajectory_lengths > torch.arange(0, tensor.shape[0], device=tensor.device).unsqueeze(1)
-    return padded_trajectories, trajectory_masks
-
-
-def unpad_trajectories(trajectories, masks):
-    """Does the inverse operation of  split_and_pad_trajectories()"""
-    # Need to transpose before and after the masking to have proper reshaping
-    return (
-        trajectories.transpose(1, 0)[masks.transpose(1, 0)]
-        .view(-1, trajectories.shape[0], trajectories.shape[-1])
-        .transpose(1, 0)
-    )
 
 
 class RolloutStorage:
@@ -343,68 +274,6 @@ class RolloutStorage:
                     None,
                 ), None
 
-    # for RNNs only
-    def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):
-
-        padded_obs_trajectories, trajectory_masks = split_and_pad_trajectories(self.observations, self.dones)
-        if self.privileged_observations is not None:
-            padded_critic_obs_trajectories, _ = split_and_pad_trajectories(self.privileged_observations, self.dones)
-        else:
-            padded_critic_obs_trajectories = padded_obs_trajectories
-
-        mini_batch_size = self.num_envs // num_mini_batches
-        for ep in range(num_epochs):
-            first_traj = 0
-            for i in range(num_mini_batches):
-                start = i * mini_batch_size
-                stop = (i + 1) * mini_batch_size
-
-                dones = self.dones.squeeze(-1)
-                last_was_done = torch.zeros_like(dones, dtype=torch.bool)
-                last_was_done[1:] = dones[:-1]
-                last_was_done[0] = True
-                trajectories_batch_size = torch.sum(last_was_done[:, start:stop])
-                last_traj = first_traj + trajectories_batch_size
-
-                masks_batch = trajectory_masks[:, first_traj:last_traj]
-                obs_batch = padded_obs_trajectories[:, first_traj:last_traj]
-                critic_obs_batch = padded_critic_obs_trajectories[:, first_traj:last_traj]
-
-                actions_batch = self.actions[:, start:stop]
-                old_mu_batch = self.mu[:, start:stop]
-                old_sigma_batch = self.sigma[:, start:stop]
-                returns_batch = self.returns[:, start:stop]
-                advantages_batch = self.advantages[:, start:stop]
-                values_batch = self.values[:, start:stop]
-                old_actions_log_prob_batch = self.actions_log_prob[:, start:stop]
-
-                # reshape to [num_envs, time, num layers, hidden dim] (original shape: [time, num_layers, num_envs, hidden_dim])
-                # then take only time steps after dones (flattens num envs and time dimensions),
-                # take a batch of trajectories and finally reshape back to [num_layers, batch, hidden_dim]
-                last_was_done = last_was_done.permute(1, 0)
-                hid_a_batch = [
-                    saved_hidden_states.permute(2, 0, 1, 3)[last_was_done][first_traj:last_traj]
-                    .transpose(1, 0)
-                    .contiguous()
-                    for saved_hidden_states in self.saved_hidden_states_a
-                ]
-                hid_c_batch = [
-                    saved_hidden_states.permute(2, 0, 1, 3)[last_was_done][first_traj:last_traj]
-                    .transpose(1, 0)
-                    .contiguous()
-                    for saved_hidden_states in self.saved_hidden_states_c
-                ]
-                # remove the tuple for GRU
-                hid_a_batch = hid_a_batch[0] if len(hid_a_batch) == 1 else hid_a_batch
-                hid_c_batch = hid_c_batch[0] if len(hid_c_batch) == 1 else hid_a_batch
-
-                yield obs_batch, critic_obs_batch, actions_batch, values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (
-                    hid_a_batch,
-                    hid_c_batch,
-                ), masks_batch
-
-                first_traj = last_traj
-
 
 class PPO:
     actor_critic: ActorCritic
@@ -463,8 +332,6 @@ class PPO:
         self.actor_critic.train()
 
     def act(self, obs, critic_obs):
-        if self.actor_critic.is_recurrent:
-            self.transition.hidden_states = self.actor_critic.get_hidden_states()
         # Compute the actions and values
         self.transition.actions = self.actor_critic.act(obs).detach()
         self.transition.values = self.actor_critic.evaluate(critic_obs).detach()
@@ -497,10 +364,8 @@ class PPO:
     def update(self):
         mean_value_loss = 0
         mean_surrogate_loss = 0
-        if self.actor_critic.is_recurrent:
-            generator = self.storage.reccurent_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
-        else:
-            generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
+
+        generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for (
             obs_batch,
             critic_obs_batch,
@@ -645,11 +510,12 @@ class OnPolicyRunner:
         cur_episode_length = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
 
         tot_iter = self.current_learning_iteration + num_learning_iterations
-        for it in range(self.current_learning_iteration, tot_iter):
+
+        for it in trange(self.current_learning_iteration, tot_iter):
             start = time.time()
             # Rollout
             with torch.inference_mode():
-                for i in range(self.num_steps_per_env):
+                for i in trange(self.num_steps_per_env):
                     actions = self.alg.act(obs, critic_obs)
                     obs, privileged_obs, rewards, dones, infos = self.env.step(actions)
                     critic_obs = privileged_obs if privileged_obs is not None else obs
@@ -680,6 +546,7 @@ class OnPolicyRunner:
                 start = stop
                 self.alg.compute_returns(critic_obs)
 
+            self.current_learning_iteration += 1
             mean_value_loss, mean_surrogate_loss = self.alg.update()
             stop = time.time()
             learn_time = stop - start
@@ -688,7 +555,7 @@ class OnPolicyRunner:
                 self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
             ep_infos.clear()
 
-        self.current_learning_iteration += num_learning_iterations
+        # self.current_learning_iteration += num_learning_iterations
         self.save(os.path.join(self.log_dir, "model_{}.pt".format(self.current_learning_iteration)))
 
     def log(self, locs, width=80, pad=35):
@@ -727,12 +594,12 @@ class OnPolicyRunner:
             wandb_log["Train/mean_episode_length"] = statistics.mean(locs["lenbuffer"])
             # wandb_log["Train/mean_reward/time"]= statistics.mean(locs["rewbuffer"]), self.tot_time
             # wandb_log["Train/mean_episode_length/time"]= statistics.mean(locs["lenbuffer"]), self.tot_time
-            wandb_log["Train/mean_reward_time"] = statistics.mean(locs["rewbuffer"] / self.tot_time)
-            wandb_log["Train/mean_episode_length_time"] = statistics.mean(locs["lenbuffer"] / self.tot_time)
+            wandb_log["Train/mean_reward_time"] = statistics.mean(locs["rewbuffer"]) / self.tot_time
+            wandb_log["Train/mean_episode_length_time"] = statistics.mean(locs["lenbuffer"]) / self.tot_time
 
         self.wandb.log(wandb_log)
 
-        str = f" \033[1m Learning iteration {locs['it']}/{self.current_learning_iteration + locs['num_learning_iterations']} \033[0m "
+        str = f" \033[1m Learning iteration {locs['it']}/{locs['tot_iter']} \033[0m "
 
         if len(locs["rewbuffer"]) > 0:
             log_string = (
@@ -773,6 +640,7 @@ class OnPolicyRunner:
         print(log_string)
 
     def save(self, path, infos=None):
+        print("=== saving, iter = ", self.current_learning_iteration)
         torch.save(
             {
                 "model_state_dict": self.alg.actor_critic.state_dict(),
@@ -785,6 +653,8 @@ class OnPolicyRunner:
 
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path)
+        print(loaded_dict.keys())
+        print(loaded_dict["iter"])
         self.alg.actor_critic.load_state_dict(loaded_dict["model_state_dict"])
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])
