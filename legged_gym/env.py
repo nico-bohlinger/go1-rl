@@ -26,7 +26,7 @@ class Env:
 
         self.gym = gymapi.acquire_gym()
 
-        self.device = cfg.env.device
+        self.device = cfg.experiment.device
         self.sim_device_id = int(self.device.split(":")[1])
         # graphics device for rendering, -1 for no rendering
         self.graphics_device_id = self.sim_device_id

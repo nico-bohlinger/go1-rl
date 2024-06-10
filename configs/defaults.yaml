@@ -11,6 +11,7 @@ hydra:
 experiment:
   seed: 1
   name: ""
+  device: "cuda:0"
 
 wandb:
   project: "legged-gym"
@@ -18,7 +19,6 @@ wandb:
 #  name: "${experiment.name}" # unused
 
 env:
-  device: "cuda:0"
   headless: True
   num_envs: 4096
   unit_obs: 45
