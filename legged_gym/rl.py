@@ -641,7 +641,6 @@ class OnPolicyRunner:
         print(log_string)
 
     def save(self, path, infos=None):
-        print("=== saving, iter = ", self.current_learning_iteration)
         torch.save(
             {
                 "model_state_dict": self.alg.actor_critic.state_dict(),
