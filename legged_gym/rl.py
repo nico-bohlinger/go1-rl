@@ -467,7 +467,8 @@ class OnPolicyRunner:
         )
         self.alg = PPO(actor_critic, device=self.device, **self.alg_cfg)
 
-        self.wandb.watch(self.alg.actor_critic, log="gradients", log_graph=False)
+        if self.wandb is not None:
+            self.wandb.watch(self.alg.actor_critic, log="gradients", log_graph=False)
 
         self.num_steps_per_env = self.cfg.num_steps_per_env
         self.save_interval = self.cfg.save_interval
@@ -653,8 +654,6 @@ class OnPolicyRunner:
 
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path)
-        print(loaded_dict.keys())
-        print(loaded_dict["iter"])
         self.alg.actor_critic.load_state_dict(loaded_dict["model_state_dict"])
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])

@@ -184,20 +184,11 @@ def get_args():
 
 
 def export_policy_as_jit(actor_critic, path):
-    if hasattr(actor_critic, 'memory_a'):
-        # assumes LSTM: TODO add GRU
-        exporter = PolicyExporterLSTM(actor_critic)
-        exporter.export(path)
-    else:
-        os.makedirs(path, exist_ok=True)
-        x = os.path.join(path, 'ac_weights_last.pt')
-        traced_script = torch.jit.script(copy.deepcopy(actor_critic.actor).to('cpu'))
-        traced_script.save(x)
+    os.makedirs(path, exist_ok=True)
+    x = os.path.join(path, f'_exported.pt')
+    traced_script = torch.jit.script(copy.deepcopy(actor_critic.actor).to('cpu'))
+    traced_script.save(x)
 
-        # Actor = Actor body from wtw
-        # x = os.path.join(path, 'body_latest.jit')
-        # traced_script = torch.jit.script(copy.deepcopy(actor_critic.actor).to('cpu'))
-        # traced_script.save(x)
 
 
 class PolicyExporterLSTM(torch.nn.Module):

@@ -19,8 +19,6 @@ def train(cfg):
     setSeed(cfg.experiment.seed)
     logdir = createLogDir(cfg)
 
-    # TODO: play script
-    # TODO: export script
     # TODO: performance
     # TODO: simplify code (take out optional stuff)
     # TODO: simplify settings
