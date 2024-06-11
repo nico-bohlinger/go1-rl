@@ -31,3 +31,8 @@
   - [x] merge configs
   - [x] merge base and env
   - [x] copy over rl stuff
+  - [ ] performance
+  - [ ] simplify code (take out optional stuff)
+  - [ ] simplify settings
+  - [ ] change entity in wandb to be loaded from external file
+

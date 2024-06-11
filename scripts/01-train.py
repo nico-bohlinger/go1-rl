@@ -19,12 +19,6 @@ def train(cfg):
     setSeed(cfg.experiment.seed)
     logdir = createLogDir(cfg)
 
-    # TODO: performance
-    # TODO: simplify code (take out optional stuff)
-    # TODO: simplify settings
-
-    # TODO change entity in wandb to be loaded from external file
-
     env = Env(cfg)
     ppo = OnPolicyRunner(env, cfg.ppo, log_dir=logdir, device=cfg.experiment.device, wandb=wandb)
 

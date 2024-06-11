@@ -9,24 +9,28 @@ hydra:
     dir: .
 
 experiment:
-  seed: 1
-  name: ""
-  device: "cuda:1"
+  seed: 1 # TODO performance should be somewhat consistent across seeds but pls verify
+  name: "" # unused
+  device: "cuda:0"  # TODO: please change
 
 wandb:
-  project: "legged-gym"
-  entity: "chris-pal"
+  project: "legged-gym" # TODO: please change
+  entity: "chris-pal" # TODO: please change
 #  name: "${experiment.name}" # unused
 
 env:
   headless: True
+  # TODO Adjust this to your machine (more robot means faster training)
+  # ... fewer robots means less VRAM usage
   num_envs: 4096
-  unit_obs: 45
-  state_hist: 5
-  num_observations: 45  # 48
+  unit_obs: 45 # number of observations on a single robot
+  state_hist: 5 # length of state history
+  num_observations: 45
   num_privileged_obs: 45
-  height_obs: 241
-  # 45*5+241# None # 241 # 187 (height) +51 (contact forces) + 3 (base lin vel) #None # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
+  height_obs: 241 # number of points measured in heightmap obs
+  # 45*5+241# None # 241 # 187 (height) +51 (contact forces) + 3 (base lin vel)
+  #None # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training).
+  # None is returned otherwise
   num_actions: 12
   env_spacing: 3.0  # not used with heightfields/trimeshes
   send_timeouts: True  # send time out information to the algorithm
@@ -36,7 +40,8 @@ env:
   priv_observe_base_lin_vel: True
 
 terrain:
-#  mesh_type: "trimesh" # actual random terrain, slow to train
+  # TODO TINKER WITH THIS (and this whole section in general):
+  #  mesh_type: "trimesh" # actual random terrain, slow to train
   mesh_type: "plane" # flat plane, fast to train
   horizontal_scale: 0.1  # [m]
   vertical_scale: 0.005  # [m]
@@ -46,7 +51,7 @@ terrain:
   dynamic_friction: 1.0
   restitution: 0.0
   # rough terrain only:
-  measure_heights: True
+  measure_heights: True # required
   # 1mx1.6m rectangle (without center line)
   measured_points_x: [ -0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8 ]
   measured_points_y: [ -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 ]
@@ -59,9 +64,11 @@ terrain:
   num_cols: 10  # 20  # number of terrain cols (types)
   num_sub_terrains: 0 # auto-populated, leave at 0
   # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+
   # terrain_proportions: [0.0, 0.0, 0.0, 0.0, 1.0]
-#  terrain_proportions: [ 0.0, 0.0, 0.1, 0.1, 0.8 ]
-  terrain_proportions: [0.1, 0.1, 0.35, 0.25, 0.2]
+  #  terrain_proportions: [ 0.0, 0.0, 0.1, 0.1, 0.8 ]
+  # TODO TINKER WITH THIS:
+  terrain_proportions: [ 0.1, 0.1, 0.35, 0.25, 0.2 ]
   # trimesh only:
   slope_treshold: 0.75  # slopes above this threshold will be corrected to vertical surfaces
 
@@ -114,8 +121,8 @@ asset:
   file: "{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf"
   name: "go1"
   foot_name: "foot"
-  penalize_contacts_on: ["thigh", "calf"]
-  terminate_after_contacts_on: ["base"]
+  penalize_contacts_on: [ "thigh", "calf" ]
+  terminate_after_contacts_on: [ "base" ]
   self_collisions: 0  # 1 to disable, 0 to enable...bitwise filter
   flip_visual_attachments: False
   fix_base_link: False
@@ -135,20 +142,21 @@ asset:
   thickness: 0.01
 
 domain_rand:
+  # TODO mess with these (a little bit, this is not your main focus)
   rand_interval_s: 8.0
   rand_interval: 0.0 # auto-populated, leave at 0
   randomize_friction: True
-  friction_range: [0.05, 1.25]  # [0.5, 4.5]
+  friction_range: [ 0.05, 1.25 ]  # [0.5, 4.5]
   randomize_base_mass: True  # False
-  added_mass_range: [-1.0, 3.0]  # [-1., 1.]
+  added_mass_range: [ -1.0, 3.0 ]  # [-1., 1.]
   randomize_base_com: True
-  com_pos_range: [-0.1, 0.1]
+  com_pos_range: [ -0.1, 0.1 ]
   gravity_rand_interval_s: 8.0
   gravity_rand_interval: 0.0 # auto-populated, leave at 0
   gravity_rand_duration: 0.0 # auto-populated, leave at 0
   gravity_impulse_duration: 0.99
   randomize_gravity: True
-  gravity_range: [-1, 1]
+  gravity_range: [ -1, 1 ]
   push_robots: False
   push_interval_s: 15
   push_interval: None # auto-populated
@@ -162,10 +170,23 @@ domain_rand:
   motor_offset_range: [ -0.02, 0.02 ]
 
 rewards:
+  # TODO mess with these to generate different behaviors. This and the terrain is where you'll spend most of your time
+
   soft_dof_pos_limit: 0.9
   base_height_target: 0.34
+  # if true negative total rewards are clipped at zero (avoids early termination problems)
+  only_positive_rewards: True # unused
+
+  # TODO by decreasing this, you're making training harder but increase precision
+  #     ...by increasing it, you make training easier
+  tracking_sigma: 0.25  # tracking reward: exp(-error^2/sigma)
+
+  soft_dof_vel_limit: 1.0
+  soft_torque_limit: 1.0
+  max_contact_force: 100.0  # forces above this value are penalized
   
   scales:
+    # TODO these are all the reward terms. Feel free to try out different combos to check what works best
     torques: -0.0002  # -0.0002
     dof_pos_limits: -10.0
     dof_pos: -0.05
@@ -180,8 +201,8 @@ rewards:
     joint_power: -2e-5
     power_distribution: -10e-5  # -10e-5
     termination: -0.0
-    tracking_lin_vel: 1.0
-    tracking_ang_vel: 0.5
+    tracking_lin_vel: 1.0 # TODO this is the main thing you want to incentivize
+    tracking_ang_vel: 0.5 # TODO this is the second main thing you want to incentivize
     lin_vel_z: -2.0
     dof_vel: -0.0
     dof_acc: -2.5e-7
@@ -192,17 +213,11 @@ rewards:
     action_smoothness_1: 0.0
     action_smoothness_2: 0.0
 
-  # if true negative total rewards are clipped at zero (avoids early termination problems)
-  only_positive_rewards: True
-  tracking_sigma: 0.25  # tracking reward: exp(-error^2/sigma)
 
-  soft_dof_vel_limit: 1.0
-  soft_torque_limit: 1.0
-  max_contact_force: 100.0  # forces above this value are penalized
 
 
 normalization:
-  contact_force_range: [0.0, 50.0]
+  contact_force_range: [ 0.0, 50.0 ]
   clip_observations: 100.0
   clip_actions: 100.0
   
@@ -211,13 +226,9 @@ normalization:
     ang_vel: 1.0  # 0.25
     dof_pos: 1.0  # 1.0
     dof_vel: 1.0  # 0.05
-    # lin_vel: 2.0
-    # ang_vel: 0.25
-    # dof_pos: 1.0
-    # dof_vel: 0.05
     height_measurements: 5.0
-  
-  
+
+
 noise:
   add_noise: True
   noise_level: 1.0  # scales other values
@@ -229,7 +240,7 @@ noise:
     ang_vel: 0.2
     gravity: 0.05
     height_measurements: 0.1
-  
+
     # viewer camera:
 viewer:
   ref_env: 0
@@ -263,10 +274,6 @@ ppo:
     actor_hidden_dims: [ 512, 256, 128 ]
     critic_hidden_dims: [ 512, 256, 128 ]
     activation: "elu"  # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
-    # only for 'ActorCriticRecurrent':
-    # rnn_type: 'lstm'
-    # rnn_hidden_size: 512
-    # rnn_num_layers: 1
 
   algorithm:
 
@@ -287,9 +294,11 @@ ppo:
   runner:
     seed: 1
     num_steps_per_env: 24  # per iteration
+    # TODO: adjust this to train for longer: 1.5k should give you a working policy for flat ground
     max_iterations: 1500  # number of policy updates
 
     # logging
+    # TODO: turn this up to like 500 to reduce saving freq and save disk space.
     save_interval: 100  # check for potential saves every this many iterations
 
     # load and resume
