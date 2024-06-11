@@ -1,7 +1,7 @@
-import torch
 from omegaconf import OmegaConf
 import hydra
 from legged_gym.env import Env
+import torch
 
 OmegaConf.register_new_resolver("eval", eval)
 
