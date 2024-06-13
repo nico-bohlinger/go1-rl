@@ -66,7 +66,7 @@ terrain:
   # terrain_proportions: [0.0, 0.0, 0.0, 0.0, 1.0]
   #  terrain_proportions: [ 0.0, 0.0, 0.1, 0.1, 0.8 ]
   # TODO TINKER WITH THIS:
-  terrain_proportions: [ 0.1, 0.1, 0.35, 0.25, 0.2 ]
+  terrain_proportions: [ 0.1, 0.1, 0.25, 0.15, 0.4 ]
   # trimesh only:
   slope_treshold: 0.75  # slopes above this threshold will be corrected to vertical surfaces
 
@@ -75,7 +75,7 @@ commands:
   max_curriculum: 1.0
   num_commands: 4  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
   resampling_time: 10.0  # time before command are changed[s]
-  heading_command: True  # if true: compute ang vel command from heading error
+  heading_command: False  # if true: compute ang vel command from heading error
 
   ranges:
     lin_vel_x: [ -1.0, 1.0 ]  # min max [m/s]
