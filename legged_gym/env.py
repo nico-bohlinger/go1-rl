@@ -164,6 +164,7 @@ class Env:
 
         self.episode_length_buf += 1
         self.common_step_counter += 1
+        self.total_step_counter += self.num_envs
 
         # prepare quantities
         self.base_quat[:] = self.root_states[:, 3:7]
@@ -269,7 +270,11 @@ class Env:
         self.rew_buf[:] = 0.0
         for i in range(len(self.reward_functions)):
             name = self.reward_names[i]
-            rew = self.reward_functions[i]() * self.reward_scales[name]
+            if "tracking" in name:
+                rew = self.reward_functions[i]() * self.reward_scales[name]
+            else:
+                curr_coef = min(self.total_step_counter / 20_000_000, 1.0)
+                rew = self.reward_functions[i]() * self.reward_scales[name] * curr_coef
             self.rew_buf += rew
             self.episode_sums[name] += rew
         if self.cfg.rewards.only_positive_rewards:
@@ -737,12 +742,8 @@ class Env:
             torch.mean(self.episode_sums["tracking_lin_vel"][env_ids]) / self.max_episode_length
             > 0.8 * self.reward_scales["tracking_lin_vel"]
         ):
-            self.command_ranges["lin_vel_x"][0] = np.clip(
-                self.command_ranges["lin_vel_x"][0] - 0.5, -self.cfg.commands.max_curriculum, 0.0
-            )
-            self.command_ranges["lin_vel_x"][1] = np.clip(
-                self.command_ranges["lin_vel_x"][1] + 0.5, 0.0, self.cfg.commands.max_curriculum
-            )
+            self.command_ranges["lin_vel_x"][0] = min(max(self.command_ranges["lin_vel_x"][0] - 0.5, -self.cfg.commands.max_curriculum), 0.0)
+            self.command_ranges["lin_vel_x"][1] = max(min(self.command_ranges["lin_vel_x"][1] + 0.5, self.cfg.commands.max_curriculum), 0.0)
 
     def _get_noise_scale_vec(self, cfg):
         """Sets a vector used to scale the noise added to the observations.
@@ -811,6 +812,7 @@ class Env:
 
         # initialize some data used later on
         self.common_step_counter = 0
+        self.total_step_counter = 0
         self.extras = {}
         self.noise_scale_vec = self._get_noise_scale_vec(self.cfg)
         self.gravity_vec = to_torch(get_axis_params(-1.0, self.up_axis_idx), device=self.device).repeat(

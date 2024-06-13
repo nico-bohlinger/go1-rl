@@ -301,6 +301,7 @@ class PPO:
         self.desired_kl = desired_kl
         self.schedule = schedule
         self.learning_rate = learning_rate
+        self.initial_learning_rate = learning_rate
 
         # PPO components
         self.actor_critic = actor_critic
@@ -361,7 +362,7 @@ class PPO:
         last_values = self.actor_critic.evaluate(last_critic_obs).detach()
         self.storage.compute_returns(last_values, self.gamma, self.lam)
 
-    def update(self):
+    def update(self, current_learning_iteration, num_learning_iterations):
         mean_value_loss = 0
         mean_surrogate_loss = 0
 
@@ -408,6 +409,10 @@ class PPO:
 
                     for param_group in self.optimizer.param_groups:
                         param_group["lr"] = self.learning_rate
+            elif self.schedule == "linear":
+                self.learning_rate = self.initial_learning_rate * (1 - current_learning_iteration / num_learning_iterations)
+                for param_group in self.optimizer.param_groups:
+                    param_group["lr"] = self.learning_rate
 
             # Surrogate loss
             ratio = torch.exp(actions_log_prob_batch - torch.squeeze(old_actions_log_prob_batch))
@@ -548,7 +553,7 @@ class OnPolicyRunner:
                 self.alg.compute_returns(critic_obs)
 
             self.current_learning_iteration += 1
-            mean_value_loss, mean_surrogate_loss = self.alg.update()
+            mean_value_loss, mean_surrogate_loss = self.alg.update(self.current_learning_iteration, num_learning_iterations)
             stop = time.time()
             learn_time = stop - start
             self.log(locals())
