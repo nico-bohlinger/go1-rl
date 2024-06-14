@@ -21,7 +21,7 @@ wandb:
 env:
   headless: True
   # ... fewer robots means less VRAM usage
-  num_envs: 8192
+  num_envs: 16384
   unit_obs: 45 # number of observations on a single robot
   state_hist: 5 # length of state history
   num_observations: 45
@@ -75,7 +75,7 @@ commands:
   max_curriculum: 1.0
   num_commands: 4  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
   resampling_time: 10.0  # time before command are changed[s]
-  heading_command: False  # if true: compute ang vel command from heading error
+  heading_command: True  # if true: compute ang vel command from heading error
 
   ranges:
     lin_vel_x: [ -1.0, 1.0 ]  # min max [m/s]
@@ -286,7 +286,7 @@ ppo:
 
   runner:
     seed: 1
-    num_steps_per_env: 64  # per iteration
+    num_steps_per_env: 32  # per iteration
     # TODO: adjust this to train for longer: 1.5k should give you a working policy for flat ground
     max_iterations: 1500  # number of policy updates
 
